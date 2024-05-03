@@ -11,7 +11,8 @@ namespace busfy_api.src.Domain.Models
         public string? Type { get; set; }
 
         public string ContentSubscriptionType { get; set; }
-
+        public ContentCategory ContentCategory { get; set; }
+        public string ContentCategoryName { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public Guid UserId { get; set; }
@@ -19,7 +20,6 @@ namespace busfy_api.src.Domain.Models
 
         public List<UserCreationLike> Likes { get; set; } = new List<UserCreationLike>();
         public List<UserCreationComment> Comments { get; set; } = new List<UserCreationComment>();
-        public List<Post> Posts { get; set; } = new List<Post>();
 
 
         public UserCreationBody ToUserCreationBody()

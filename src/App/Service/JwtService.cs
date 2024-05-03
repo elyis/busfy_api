@@ -58,7 +58,7 @@ namespace webApiTemplate.src.App.Service
                 .Claims
                 .ToList();
 
-        public TokenInfo GetTokenInfo(string token)
+        public TokenInfo GetTokenPayload(string token)
         {
             var claims = GetClaims(token);
             var userIdStr = claims.FirstOrDefault(claim => claim.Type == "UserId")?.Value;

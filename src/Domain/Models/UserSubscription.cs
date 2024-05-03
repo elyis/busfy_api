@@ -7,7 +7,7 @@ namespace busfy_api.src.Domain.Models
     [PrimaryKey(nameof(SubscriptionId), nameof(UserId))]
     public class UserSubscription
     {
-        public Subscription Subscription { get; set; }
+        public SubscriptionToAdditionalContent Subscription { get; set; }
         public Guid SubscriptionId { get; set; }
 
         public UserModel User { get; set; }

@@ -34,7 +34,7 @@ namespace busfy_api.src.Web.Controllers
             [FromHeader(Name = "Authorization")] string token
         )
         {
-            var tokenInfo = _jwtService.GetTokenInfo(token);
+            var tokenInfo = _jwtService.GetTokenPayload(token);
             var result = await _userRepository.UpdateUserTag(tokenInfo.UserId, userTag);
             return result == null ? Conflict() : Ok();
         }

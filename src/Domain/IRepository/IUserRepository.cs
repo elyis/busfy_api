@@ -8,6 +8,7 @@ namespace busfy_api.src.Domain.IRepository
         Task<UserModel?> AddAsync(SignUpBody body, string role);
         Task<bool> RemoveSession(Guid sessionId);
         Task<UserModel?> GetAsync(Guid id);
+        Task<UserModel?> UpdateProfileAsync(UpdateProfileBody body, Guid id);
         Task<UserSession?> GetUserSession(Guid userId, string host, string userAgent);
         Task<UserModel?> GetAsync(string email);
         Task<IEnumerable<UserSession>> GetUserSessions(Guid userId);
@@ -22,9 +23,9 @@ namespace busfy_api.src.Domain.IRepository
         Task<UserModel?> UpdateUserTag(Guid userId, string userTag);
         Task<IEnumerable<UserModel>> GetUsersByPatternNickname(string pattern, int count, int offset);
         Task<IEnumerable<UserModel>> GetUsersByPatternUserTag(string pattern, int count, int offset);
-
         Task<bool> VerifyRecoveryCode(string email, string recoveryCode);
         Task<string?> SetRecoveryCode(string email, string recoveryCode, TimeSpan? interval = null);
         Task<UserModel?> ResetPasswordAndRemoveSessions(ResetPasswordBody resetPasswordBody);
+        Task<UserModel?> UpdateBackgroundImage(Guid id, string filename);
     }
 }

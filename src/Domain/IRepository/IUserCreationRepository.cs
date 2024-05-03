@@ -11,6 +11,7 @@ namespace busfy_api.src.Domain.IRepository
         Task<UserCreation?> GetAsync(Guid id);
         Task<UserCreation?> UpdateDescriptionAsync(Guid id, string? description, Guid userId);
         Task<bool> DeleteAsync(Guid id, Guid userId);
+        Task<int> GetCountComments(Guid userCreationId);
         Task<UserCreationLike?> CreateUserCreationLikeAsync(UserModel user, UserCreation userCreation);
         Task<UserCreationLike?> GetUserCreationLikeAsync(Guid userCreationId, Guid userId);
         Task<UserCreationComment> CreateUserCreationCommentAsync(CreateCommentBody commentBody, UserCreation userCreation, UserModel user);

@@ -19,12 +19,14 @@ namespace busfy_api.src.Infrastructure.Data
         public DbSet<PostComment> PostComments { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
 
+        public DbSet<SubscriptionToAdditionalContent> SubscriptionsToAdditionalContent { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<UserCreation> UserCreations { get; set; }
         public DbSet<UserCreationComment> UserCreationComments { get; set; }
         public DbSet<UserCreationLike> UserCreationLikes { get; set; }
-        public DbSet<UserFavouritePost> UserFavouritePosts { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
+        public DbSet<UnconfirmedAccount> UnconfirmedAccounts { get; set; }
+        public DbSet<SelectedUserCategory> SelectedUserCategories { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -36,6 +38,16 @@ namespace busfy_api.src.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Subscription>()
+            .HasOne(pp => pp.Author)
+            .WithMany(p => p.Subscriptions)
+            .HasForeignKey(pp => pp.AuthorId);
+
+            modelBuilder.Entity<Subscription>()
+                .HasOne(pp => pp.Subscriber)
+                .WithMany()
+                .HasForeignKey(pp => pp.SubId);
+
             base.OnModelCreating(modelBuilder);
         }
     }

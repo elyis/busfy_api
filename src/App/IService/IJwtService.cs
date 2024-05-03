@@ -6,6 +6,6 @@ namespace webApiTemplate.src.App.IService
     public interface IJwtService
     {
         TokenPair GenerateDefaultTokenPair(TokenInfo tokenInfo);
-        TokenInfo GetTokenInfo(string token);
+        TokenInfo GetTokenPayload(string token);
     }
 }

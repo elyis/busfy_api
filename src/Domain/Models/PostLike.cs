@@ -10,5 +10,7 @@ namespace busfy_api.src.Domain.Models
 
         public Post Post { get; set; }
         public Guid PostId { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

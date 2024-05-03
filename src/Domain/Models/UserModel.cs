@@ -17,6 +17,7 @@ namespace busfy_api.src.Domain.Models
         public string RoleName { get; set; }
         public string Nickname { get; set; }
         public string? UserTag { get; set; }
+        public string? Bio { get; set; }
 
         public string AccountStatus { get; set; }
         public DateTime? LockDuration { get; set; }
@@ -25,16 +26,17 @@ namespace busfy_api.src.Domain.Models
         public DateTime? RestoreCodeValidBefore { get; set; }
         public bool WasPasswordResetRequest { get; set; }
         public string? Image { get; set; }
+        public string? BackgroundImage { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public List<UserSession> Sessions { get; set; } = new List<UserSession>();
         public List<UserCreation> Creations { get; set; } = new List<UserCreation>();
         public List<Post> Posts { get; set; } = new List<Post>();
+        public List<Subscription> Subscriptions { get; set; } = new();
         public List<UserCreationLike> Likes { get; set; } = new List<UserCreationLike>();
         public List<UserCreationComment> Comments { get; set; } = new List<UserCreationComment>();
         public List<PostLike> PostLikes { get; set; } = new List<PostLike>();
         public List<PostComment> PostComments { get; set; } = new List<PostComment>();
-        public List<UserFavouritePost> FavouritePosts { get; set; } = new List<UserFavouritePost>();
 
         public ProfileBody ToProfileBody()
         {
@@ -43,8 +45,10 @@ namespace busfy_api.src.Domain.Models
                 Email = Email,
                 Role = Enum.Parse<UserRole>(RoleName),
                 UrlIcon = string.IsNullOrEmpty(Image) ? null : $"{Constants.webPathToProfileIcons}{Image}",
+                UrlBackgroundImage = string.IsNullOrEmpty(BackgroundImage) ? null : $"{Constants.webPathToProfileBackground}{BackgroundImage}",
                 Nickname = Nickname,
                 UserTag = UserTag,
+                Bio = Bio,
                 AccountStatus = Enum.Parse<UserAccountStatus>(AccountStatus)
             };
         }

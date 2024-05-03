@@ -33,7 +33,7 @@ namespace busfy_api.src.Web.Controllers
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token
         )
         {
-            var tokenInfo = _jwtService.GetTokenInfo(token);
+            var tokenInfo = _jwtService.GetTokenPayload(token);
             var sessions = (await _userRepository.GetUserSessions(tokenInfo.UserId))
                 .Select(session => session.ToUserSessionBody())
                 .ToList();

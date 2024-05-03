@@ -1,3 +1,5 @@
+using busfy_api.src.Domain.Entities.Response;
+
 namespace busfy_api.src.Domain.Models
 {
     public class PostComment
@@ -11,5 +13,14 @@ namespace busfy_api.src.Domain.Models
 
         public string? Comment { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public CommentBody ToCommentBody()
+        {
+            return new CommentBody
+            {
+                Comment = Comment,
+                ProfileBody = User.ToProfileBody()
+            };
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System.CodeDom.Compiler;
 using busfy_api.src.App.IService;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Shared;
@@ -12,17 +13,20 @@ namespace busfy_api.src.App.Service
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IAccountRepository _accountRepository;
         private readonly IJwtService _jwtService;
         private readonly ILocationService _locationService;
 
         public AuthService
         (
             IUserRepository userRepository,
+            IAccountRepository accountRepository,
             IJwtService jwtService,
             ILocationService locationService
         )
         {
             _userRepository = userRepository;
+            _accountRepository = accountRepository;
             _jwtService = jwtService;
             _locationService = locationService;
         }
@@ -38,6 +42,16 @@ namespace busfy_api.src.App.Service
             var user = session.User;
             var tokenPair = await UpdateToken(user.RoleName, user.Id, session.Id);
             return new OkObjectResult(tokenPair);
+        }
+
+        public async Task<IActionResult> CreateConfirmationAccount(SignUpBody body, string confirmationCode)
+        {
+            var user = await _userRepository.GetAsync(body.Email);
+            if (user != null)
+                return new BadRequestResult();
+
+            var result = await _accountRepository.CreateOrUpdateCode(body, confirmationCode);
+            return result == null ? new BadRequestResult() : new OkResult();
         }
 
         public async Task<IActionResult> SignIn(SignInBody body, CreateUserSessionBody sessionBody)
@@ -64,8 +78,16 @@ namespace busfy_api.src.App.Service
             return new OkObjectResult(tokenPair);
         }
 
-        public async Task<IActionResult> SignUp(SignUpBody body, CreateUserSessionBody sessionBody, string rolename)
+        public async Task<IActionResult> SignUp(string email, string confirmationCode, CreateUserSessionBody sessionBody, string rolename)
         {
+            var account = await _accountRepository.Get(email);
+            if (account == null)
+                return new BadRequestResult();
+
+            if (account.ValidityPeriodCode < DateTime.UtcNow || account.ConfirmationCode != confirmationCode)
+                return new BadRequestResult();
+
+            var body = account.ToSignUpBody();
             var user = await _userRepository.AddAsync(body, rolename);
             if (user == null)
                 return new ConflictResult();
@@ -79,6 +101,7 @@ namespace busfy_api.src.App.Service
             session ??= await _userRepository.CreateUserSessionAsync(sessionBody, user, location);
 
             await _userRepository.VerifySession(session.Id);
+            await _accountRepository.Remove(email);
 
             var tokenPair = await UpdateToken(rolename, user.Id, session.Id);
             return new OkObjectResult(tokenPair);

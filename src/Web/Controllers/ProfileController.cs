@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Headers;
+using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Response;
 using busfy_api.src.Domain.IRepository;
 using Microsoft.AspNetCore.Authorization;
@@ -31,9 +33,24 @@ namespace busfy_api.src.Web.Controllers
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token
         )
         {
-            var tokenInfo = _jwtService.GetTokenInfo(token);
+            var tokenInfo = _jwtService.GetTokenPayload(token);
             var user = await _userRepository.GetAsync(tokenInfo.UserId);
             return user == null ? NotFound() : Ok(user.ToProfileBody());
+        }
+
+        [HttpPut("profile"), Authorize]
+        [SwaggerOperation("Обновить профиль")]
+        [SwaggerResponse(200, Type = typeof(ProfileBody))]
+        [SwaggerResponse(400)]
+
+        public async Task<IActionResult> UpdateProfileAsync(
+            UpdateProfileBody body,
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token
+        )
+        {
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+            var result = await _userRepository.UpdateProfileAsync(body, tokenPayload.UserId);
+            return result == null ? BadRequest() : Ok(result.ToProfileBody());
         }
     }
 }

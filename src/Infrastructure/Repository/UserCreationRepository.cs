@@ -72,7 +72,15 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<UserCreationComment?> GetUserCreationCommentAsync(Guid id)
         {
-            return await _context.UserCreationComments.FirstOrDefaultAsync(e => e.Id == id);
+            return await _context.UserCreationComments
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
+
+        public async Task<int> GetCountComments(Guid userCreationId)
+        {
+            return await _context.UserCreationComments
+                .Where(e => e.CreationId == userCreationId)
+                .CountAsync();
         }
 
         public async Task<IEnumerable<UserCreationComment>> GetUserCreationCommentsAndUserAsync(Guid id, int count, int offset)
@@ -103,7 +111,6 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<UserCreation?> GetAsync(Guid id)
             => await _context.UserCreations.FirstOrDefaultAsync(e => e.Id == id);
-
 
         public async Task<IEnumerable<UserCreation>> GetUserCreationsAsync(Guid userId, ContentSubscriptionType subscriptionType, int count, int offset)
         {

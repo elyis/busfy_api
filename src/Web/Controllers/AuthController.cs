@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using busfy_api.src.App.IService;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Shared;
@@ -17,7 +18,8 @@ namespace busfy_api.src.Web.Controllers
 
         public AuthController(
             IAuthService authService,
-            IRecoveryService recoveryService)
+            IRecoveryService recoveryService
+        )
         {
             _authService = authService;
             _recoveryService = recoveryService;
@@ -30,8 +32,11 @@ namespace busfy_api.src.Web.Controllers
         [SwaggerResponse(409, "Почта уже существует")]
 
 
-        [HttpPost("signup")]
-        public async Task<IActionResult> SignUpAsync(SignUpBody signUpBody)
+        [HttpPost("confirm-signup")]
+        public async Task<IActionResult> SignUpAsync(
+            [FromQuery, EmailAddress] string email,
+            [FromQuery, Required] string confirmationCode
+        )
         {
             string role = Enum.GetName(UserRole.User)!;
             var sessionBody = new CreateUserSessionBody
@@ -40,8 +45,32 @@ namespace busfy_api.src.Web.Controllers
                 UserAgent = Request.Headers.UserAgent.ToString(),
             };
 
-            var result = await _authService.SignUp(signUpBody, sessionBody, role);
+            var result = await _authService.SignUp(email, confirmationCode, sessionBody, role);
             return result;
+        }
+
+        [HttpPost("signup")]
+        [SwaggerOperation("Отправить запрос на подтверждение создания аккаунта")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(400)]
+
+        public async Task<IActionResult> Confirmation(SignUpBody signUpBody)
+        {
+
+            var rnd = new Random();
+            var confirmationCode = rnd.Next(100_000, 1_000_000).ToString();
+
+            var response = await _authService.CreateConfirmationAccount(signUpBody, confirmationCode);
+            if (response is OkObjectResult result)
+            {
+                var confirmationBody = new RecoveryBody
+                {
+                    Email = signUpBody.Email,
+                };
+
+                await _recoveryService.SendRecoveryCodeAsync(confirmationBody);
+            }
+            return response;
         }
 
 

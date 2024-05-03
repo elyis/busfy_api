@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using busfy_api.src.Infrastructure.Data;
@@ -11,9 +12,11 @@ using busfy_api.src.Infrastructure.Data;
 namespace busfy_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240503163605_change")]
+    partial class change
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,9 +159,14 @@ namespace busfy_api.Migrations
                     b.Property<Guid>("AuthorId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("SubscriberId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("SubId", "AuthorId");
 
                     b.HasIndex("AuthorId");
+
+                    b.HasIndex("SubscriberId");
 
                     b.ToTable("Subscriptions");
                 });
@@ -504,14 +512,14 @@ namespace busfy_api.Migrations
             modelBuilder.Entity("busfy_api.src.Domain.Models.Subscription", b =>
                 {
                     b.HasOne("busfy_api.src.Domain.Models.UserModel", "Author")
-                        .WithMany("Subscriptions")
+                        .WithMany()
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("busfy_api.src.Domain.Models.UserModel", "Subscriber")
                         .WithMany()
-                        .HasForeignKey("SubId")
+                        .HasForeignKey("SubscriberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -659,8 +667,6 @@ namespace busfy_api.Migrations
                     b.Navigation("Posts");
 
                     b.Navigation("Sessions");
-
-                    b.Navigation("Subscriptions");
                 });
 #pragma warning restore 612, 618
         }

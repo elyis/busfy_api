@@ -18,6 +18,22 @@ namespace busfy_api.src.Infrastructure.Repository
             _context = context;
         }
 
+        public async Task<UserModel?> UpdateProfileAsync(UpdateProfileBody body, Guid id)
+        {
+            var user = await GetAsync(body.Email);
+
+            if (user == null || user.Id != id)
+                return null;
+
+            user.Email = body.Email;
+            user.Nickname = body.Nickname;
+            user.UserTag = body.UserTag;
+            user.Bio = body.Bio;
+
+            await _context.SaveChangesAsync();
+            return user;
+        }
+
         public async Task<UserModel?> AddAsync(SignUpBody body, string role)
         {
             var user = await GetAsync(body.Email);
@@ -258,6 +274,18 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Skip(offset)
                 .ToListAsync();
             return users;
+        }
+
+        public async Task<UserModel?> UpdateBackgroundImage(Guid id, string filename)
+        {
+            var user = await GetAsync(id);
+            if (user == null)
+                return null;
+
+            user.BackgroundImage = filename;
+            await _context.SaveChangesAsync();
+
+            return user;
         }
     }
 }
