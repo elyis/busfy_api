@@ -42,6 +42,7 @@ namespace busfy_api.src.Domain.Models
         {
             return new ProfileBody
             {
+                Id = Id,
                 Email = Email,
                 Role = Enum.Parse<UserRole>(RoleName),
                 UrlIcon = string.IsNullOrEmpty(Image) ? null : $"{Constants.webPathToProfileIcons}{Image}",

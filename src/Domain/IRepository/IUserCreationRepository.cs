@@ -8,6 +8,7 @@ namespace busfy_api.src.Domain.IRepository
     {
         Task<UserCreation> AddAsync(CreateUserCreationBody userCreationBody, UserModel user, ContentCategory category);
         Task<int> GetCountLikes(Guid id);
+        Task<int> GetCountLikesByAuthor(Guid userId);
         Task<UserCreation?> UpdateAsync(UpdateContentBody body, Guid userId);
         Task<UserCreation?> GetAsync(Guid id);
         Task<UserCreation?> UpdateDescriptionAsync(Guid id, string? description, Guid userId);

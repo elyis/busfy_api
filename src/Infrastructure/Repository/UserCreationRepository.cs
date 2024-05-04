@@ -16,6 +16,13 @@ namespace busfy_api.src.Infrastructure.Repository
             _context = context;
         }
 
+        public async Task<int> GetCountLikesByAuthor(Guid userId)
+        {
+            return await _context.UserCreations
+                .Where(e => e.UserId == userId && e.IsFormed)
+                .SelectMany(post => post.Likes)
+                .CountAsync();
+        }
         public async Task<UserCreation> AddAsync(CreateUserCreationBody userCreationBody, UserModel user, ContentCategory contentCategory)
         {
             var isTextContent = userCreationBody.Text != null;

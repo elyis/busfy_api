@@ -10,6 +10,7 @@ namespace busfy_api.src.Domain.IRepository
         Task<Post?> UpdateImageAsync(Guid id, string filename, UserCreationType type);
         Task<int> GetCountPosts();
         Task<int> GetCountLikes(Guid id);
+        Task<int> GetCountLikesByAuthor(Guid userId);
         Task<int> GetCountFavouritePosts(Guid userId);
         Task<IEnumerable<PostComment>> GetCommentsWithUser(Guid postId, int count, int offset, bool isDescending);
         Task<int> GetCountPostByCreators(IEnumerable<Guid> creatorIds);

@@ -37,6 +37,14 @@ namespace busfy_api.src.Infrastructure.Repository
             return post;
         }
 
+        public async Task<int> GetCountLikesByAuthor(Guid userId)
+        {
+            return await _context.Posts
+                .Where(e => e.CreatorId == userId && e.IsFormed)
+                .SelectMany(post => post.Likes)
+                .CountAsync();
+        }
+
         public async Task<PostComment?> AddPostComment(Post post, UserModel user, CreateCommentBody body)
         {
             var postComment = await GetPostComment(user.Id, post.Id);
