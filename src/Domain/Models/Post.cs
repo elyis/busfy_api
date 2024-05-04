@@ -1,10 +1,8 @@
 using busfy_api.src.Domain.Entities.Response;
 using busfy_api.src.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace busfy_api.src.Domain.Models
 {
-    [PrimaryKey(nameof(CreatorId), nameof(CategoryName))]
     public class Post
     {
         public Guid Id { get; set; }
