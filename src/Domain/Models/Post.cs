@@ -35,7 +35,7 @@ namespace busfy_api.src.Domain.Models
                 Id = Id,
                 Description = Description,
                 Text = Text,
-                Type = Type ?? UserCreationType.Text.ToString(),
+                Type = Enum.Parse<UserCreationType>(Type),
                 CategoryName = CategoryName,
                 Date = CreatedAt.ToString("s"),
                 ProfileCreator = Creator.ToProfileBody(),

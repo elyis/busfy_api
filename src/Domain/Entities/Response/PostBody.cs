@@ -1,3 +1,5 @@
+using busfy_api.src.Domain.Enums;
+
 namespace busfy_api.src.Domain.Entities.Response
 {
     public class PostBody
@@ -5,7 +7,7 @@ namespace busfy_api.src.Domain.Entities.Response
         public Guid Id { get; set; }
         public string? Description { get; set; }
         public string? Text { get; set; }
-        public string Type { get; set; }
+        public UserCreationType Type { get; set; }
         public string? UrlImage { get; set; }
         public string CategoryName { get; set; }
         public bool IsCommentingAllowed { get; set; }

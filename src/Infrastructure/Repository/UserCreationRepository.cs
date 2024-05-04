@@ -16,13 +16,18 @@ namespace busfy_api.src.Infrastructure.Repository
             _context = context;
         }
 
-        public async Task<UserCreation> AddAsync(CreateUserCreationBody userCreationBody, UserModel user)
+        public async Task<UserCreation> AddAsync(CreateUserCreationBody userCreationBody, UserModel user, ContentCategory contentCategory)
         {
+            var isTextContent = userCreationBody.Text != null;
             var userCreation = new UserCreation
             {
                 Description = userCreationBody.Description,
                 ContentSubscriptionType = userCreationBody.ContentSubscriptionType.ToString(),
                 User = user,
+                Text = userCreationBody.Text,
+                Type = isTextContent ? UserCreationType.Text.ToString() : null,
+                IsFormed = isTextContent,
+                ContentCategory = contentCategory,
             };
 
             userCreation = (await _context.UserCreations.AddAsync(userCreation)).Entity;
@@ -110,17 +115,35 @@ namespace busfy_api.src.Infrastructure.Repository
         }
 
         public async Task<UserCreation?> GetAsync(Guid id)
-            => await _context.UserCreations.FirstOrDefaultAsync(e => e.Id == id);
+            => await _context.UserCreations
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
 
-        public async Task<IEnumerable<UserCreation>> GetUserCreationsAsync(Guid userId, ContentSubscriptionType subscriptionType, int count, int offset)
+
+        public async Task<IEnumerable<UserCreation>> GetUserCreationsAsync(Guid userId, IEnumerable<ContentSubscriptionType> types, int count, int offset)
         {
-            var subscriptionTypeStr = subscriptionType.ToString();
+            var temp = types.Distinct().Select(e => e.ToString());
+            if (!temp.Any())
+                return new List<UserCreation>();
 
             return await _context.UserCreations
-                .Where(e => e.UserId == userId && e.ContentSubscriptionType == subscriptionTypeStr)
+                .Include(e => e.User)
+                .Where(e => e.UserId == userId && temp.Contains(e.ContentSubscriptionType))
+                .OrderByDescending(e => e.CreatedAt)
                 .Skip(offset)
                 .Take(count)
                 .ToListAsync();
+        }
+
+        public async Task<int> GetCountUserCreations(Guid userId, IEnumerable<ContentSubscriptionType> types)
+        {
+            var temp = types.Distinct().Select(e => e.ToString());
+            if (!temp.Any())
+                return 0;
+
+            return await _context.UserCreations
+                .Where(e => e.UserId == userId && temp.Contains(e.ContentSubscriptionType))
+                .CountAsync();
         }
 
         public async Task<UserCreation?> UpdateAsync(UpdateContentBody body, Guid userId)
@@ -131,6 +154,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             userCreation.Filename = body.Filename;
             userCreation.Type = body.Type.ToString();
+            userCreation.IsFormed = true;
 
             await _context.SaveChangesAsync();
             return userCreation;

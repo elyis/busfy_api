@@ -1,4 +1,3 @@
-using System.CodeDom.Compiler;
 using busfy_api.src.App.IService;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Shared;
@@ -48,7 +47,7 @@ namespace busfy_api.src.App.Service
         {
             var user = await _userRepository.GetAsync(body.Email);
             if (user != null)
-                return new BadRequestResult();
+                return new ConflictResult();
 
             var result = await _accountRepository.CreateOrUpdateCode(body, confirmationCode);
             return result == null ? new BadRequestResult() : new OkResult();
@@ -75,7 +74,12 @@ namespace busfy_api.src.App.Service
             await _userRepository.VerifySession(session.Id);
 
             var tokenPair = await UpdateToken(user.RoleName, user.Id, session.Id);
-            return new OkObjectResult(tokenPair);
+            var result = new AuthorizationResultBody
+            {
+                Profile = user.ToProfileBody(),
+                TokenPair = tokenPair
+            };
+            return new OkObjectResult(result);
         }
 
         public async Task<IActionResult> SignUp(string email, string confirmationCode, CreateUserSessionBody sessionBody, string rolename)
@@ -104,7 +108,12 @@ namespace busfy_api.src.App.Service
             await _accountRepository.Remove(email);
 
             var tokenPair = await UpdateToken(rolename, user.Id, session.Id);
-            return new OkObjectResult(tokenPair);
+            var result = new AuthorizationResultBody
+            {
+                Profile = user.ToProfileBody(),
+                TokenPair = tokenPair
+            };
+            return new OkObjectResult(result);
         }
 
         private async Task<TokenPair> UpdateToken(string rolename, Guid userId, Guid sessionId)

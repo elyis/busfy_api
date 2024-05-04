@@ -120,6 +120,8 @@ namespace busfy_api
 
                 options.EnableAnnotations();
             });
+            services.AddSwaggerGenNewtonsoftSupport();
+
 
 
             services.AddSingleton<IJwtService, JwtService>();

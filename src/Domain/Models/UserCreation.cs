@@ -9,6 +9,8 @@ namespace busfy_api.src.Domain.Models
         public string? Description { get; set; }
         public string? Filename { get; set; }
         public string? Type { get; set; }
+        public string? Text { get; set; }
+        public bool IsFormed { get; set; }
 
         public string ContentSubscriptionType { get; set; }
         public ContentCategory ContentCategory { get; set; }
@@ -48,7 +50,10 @@ namespace busfy_api.src.Domain.Models
                 UrlFile = url,
                 Type = Type == null ? null : (UserCreationType)Enum.Parse(typeof(UserCreationType), Type),
                 ContentSubscriptionType = contentSubscriptionType,
-                CreatedAt = CreatedAt,
+                Date = CreatedAt.ToString("s"),
+                CategoryName = ContentCategoryName,
+                ProfileCreator = User.ToProfileBody(),
+                Text = Text,
             };
         }
     }

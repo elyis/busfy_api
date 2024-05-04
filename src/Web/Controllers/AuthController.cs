@@ -27,15 +27,13 @@ namespace busfy_api.src.Web.Controllers
 
 
         [SwaggerOperation("Регистрация")]
-        [SwaggerResponse(200, "Успешно создан", Type = typeof(TokenPair))]
-        [SwaggerResponse(400, "Токен не валиден или активирован")]
-        [SwaggerResponse(409, "Почта уже существует")]
+        [SwaggerResponse(200, "Успешно создан", Type = typeof(AuthorizationResultBody))]
+        [SwaggerResponse(400, "Неккоректный код подтверждения или истек период действия")]
 
 
         [HttpPost("confirm-signup")]
         public async Task<IActionResult> SignUpAsync(
-            [FromQuery, EmailAddress] string email,
-            [FromQuery, Required] string confirmationCode
+            ConfirmSignupBody body
         )
         {
             string role = Enum.GetName(UserRole.User)!;
@@ -45,7 +43,7 @@ namespace busfy_api.src.Web.Controllers
                 UserAgent = Request.Headers.UserAgent.ToString(),
             };
 
-            var result = await _authService.SignUp(email, confirmationCode, sessionBody, role);
+            var result = await _authService.SignUp(body.Email, body.ConfirmationCode, sessionBody, role);
             return result;
         }
 
@@ -53,6 +51,7 @@ namespace busfy_api.src.Web.Controllers
         [SwaggerOperation("Отправить запрос на подтверждение создания аккаунта")]
         [SwaggerResponse(200)]
         [SwaggerResponse(400)]
+        [SwaggerResponse(409, Description = "Почта уже зарегистрированна")]
 
         public async Task<IActionResult> Confirmation(SignUpBody signUpBody)
         {
@@ -76,7 +75,7 @@ namespace busfy_api.src.Web.Controllers
 
 
         [SwaggerOperation("Авторизация")]
-        [SwaggerResponse(200, "Успешно", Type = typeof(TokenPair))]
+        [SwaggerResponse(200, "Успешно", Type = typeof(AuthorizationResultBody))]
         [SwaggerResponse(400, "Пароли не совпадают")]
         [SwaggerResponse(404, "Email не зарегистрирован")]
 

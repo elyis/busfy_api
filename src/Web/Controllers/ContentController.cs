@@ -17,16 +17,22 @@ namespace busfy_api.src.Web.Controllers
     {
         private readonly IJwtService _jwtService;
         private readonly IUserCreationRepository _userCreationRepository;
+        private readonly ISubscriptionToAdditionalContentRepository _subscriptionToAdditionalContentRepository;
+        private readonly IContentCategoryRepository _contentCategoryRepository;
         private readonly IUserRepository _userRepository;
 
         public ContentController(
             IJwtService jwtService,
             IUserCreationRepository userCreationRepository,
+            ISubscriptionToAdditionalContentRepository subscriptionToAdditionalContentRepository,
+            IContentCategoryRepository contentCategoryRepository,
             IUserRepository userRepository
         )
         {
             _jwtService = jwtService;
             _userCreationRepository = userCreationRepository;
+            _contentCategoryRepository = contentCategoryRepository;
+            _subscriptionToAdditionalContentRepository = subscriptionToAdditionalContentRepository;
             _userRepository = userRepository;
         }
 
@@ -77,7 +83,8 @@ namespace busfy_api.src.Web.Controllers
 
         public async Task<IActionResult> AddContent(
             CreateUserCreationBody body,
-            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token
+            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
+            [FromQuery, Required] string categoryName
         )
         {
             var tokenInfo = _jwtService.GetTokenPayload(token);
@@ -85,7 +92,11 @@ namespace busfy_api.src.Web.Controllers
             if (user == null)
                 return BadRequest();
 
-            var result = await _userCreationRepository.AddAsync(body, user);
+            var category = await _contentCategoryRepository.Get(categoryName);
+            if (category == null)
+                return BadRequest();
+
+            var result = await _userCreationRepository.AddAsync(body, user, category);
             if (result == null)
                 return BadRequest("Failed to add the content");
 
@@ -94,7 +105,7 @@ namespace busfy_api.src.Web.Controllers
 
         [HttpGet("contents"), Authorize]
         [SwaggerOperation("Получить контент пользователя")]
-        [SwaggerResponse(200, Type = typeof(IEnumerable<UserCreationBody>))]
+        [SwaggerResponse(200, Type = typeof(PaginationResponse<UserCreationBody>))]
 
         public async Task<IActionResult> GetContents(
             [FromQuery, Required] Guid userId,
@@ -104,10 +115,32 @@ namespace busfy_api.src.Web.Controllers
         )
         {
             var tokenInfo = _jwtService.GetTokenPayload(token);
-            var currentUser = await _userRepository.GetAsync(tokenInfo.UserId);
+            var types = new List<ContentSubscriptionType>() { ContentSubscriptionType.Public };
+            if (userId == tokenInfo.UserId)
+            {
+                types.Add(ContentSubscriptionType.Private);
+                types.Add(ContentSubscriptionType.Single);
+            }
+            else
+            {
+                var user = await _userRepository.GetAsync(userId);
+                if (user == null)
+                    return NotFound();
 
-            var contents = (await _userCreationRepository.GetUserCreationsAsync(userId, ContentSubscriptionType.Public, count, offset)).Select(e => e.ToUserCreationBody());
-            return Ok(contents);
+                var subscriptions = await _subscriptionToAdditionalContentRepository.GetSubscriptionsByUserAndSubscription(userId, count, offset);
+                types.AddRange(subscriptions.Select(e => Enum.Parse<ContentSubscriptionType>(e.Subscription.Type)));
+            }
+
+            var result = await _userCreationRepository.GetUserCreationsAsync(userId, types, count, offset);
+            var totalContents = await _userCreationRepository.GetCountUserCreations(userId, types);
+
+            return Ok(new PaginationResponse<UserCreationBody>
+            {
+                Count = count,
+                Offset = offset,
+                Total = totalContents,
+                Items = result.Select(e => e.ToUserCreationBody())
+            });
         }
 
         [HttpPost("like/content"), Authorize]
