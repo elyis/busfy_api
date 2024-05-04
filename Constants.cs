@@ -12,7 +12,7 @@ namespace busfy_api
         public static readonly string localPathToPrivateContentFiles = $"{localPathToStorages}Content/Private/";
         public static readonly string localPathToContentCategoryFiles = $"{localPathToStorages}Content/Categories/";
 
-        public static readonly string webPathToProfileIcons = $"{serverUrl}/api/upload/profileIcon/";
+        public static readonly string webPathToProfileIcons = $"{serverUrl}/api/upload/profile/";
         public static readonly string webPathToProfileBackground = $"{serverUrl}/api/upload/profile-background/";
         public static readonly string webPathToPublicContentFile = $"{serverUrl}/api/upload/content/pub/";
         public static readonly string webPathToPrivateContentFile = $"{serverUrl}/api/upload/content/private/";

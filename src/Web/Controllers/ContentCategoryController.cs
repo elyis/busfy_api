@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Headers;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Response;
+using busfy_api.src.Domain.Enums;
 using busfy_api.src.Domain.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +33,7 @@ namespace busfy_api.src.Web.Controllers
             _jwtService = jwtService;
         }
 
-        [HttpPost("content-category"), Authorize]
+        [HttpPost("content-category"), Authorize(Roles = nameof(UserRole.Admin))]
         [SwaggerOperation("Создать категорию контента")]
         [SwaggerResponse(200)]
         [SwaggerResponse(409)]

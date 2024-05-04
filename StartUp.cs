@@ -2,11 +2,14 @@ using System.Text;
 using busfy_api.src.App.IService;
 using busfy_api.src.App.Service;
 using busfy_api.src.Domain.Entities.Config;
+using busfy_api.src.Domain.Enums;
+using busfy_api.src.Domain.Models;
 using busfy_api.src.Infrastructure.Data;
 using busfy_api.src.Shared.Filters;
 using busfy_api.src.Web.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -14,6 +17,7 @@ using MimeDetective;
 using MimeDetective.Definitions.Licensing;
 using Swashbuckle.AspNetCore.Filters;
 using webApiTemplate.src.App.IService;
+using webApiTemplate.src.App.Provider;
 using webApiTemplate.src.App.Service;
 using webApiTemplate.src.Domain.Entities.Config;
 
@@ -185,6 +189,28 @@ namespace busfy_api
             app.UseMiddleware<CustomStatusCodeMiddleware>();
             app.MapControllers();
             app.Run();
+        }
+
+        private void InitDatabase(IConfiguration config)
+        {
+            var context = new AppDbContext(new DbContextOptions<AppDbContext>(), config);
+            var email = "admin@gmail.com";
+
+            var user = context.Users.FirstOrDefault(e => e.Email == email);
+            if (user == null)
+            {
+                user = new UserModel
+                {
+                    Email = email,
+                    AccountStatus = UserAccountStatus.Active.ToString(),
+                    Nickname = "Дуров верни стену",
+                    RoleName = UserRole.Admin.ToString(),
+                    UserTag = "ton-crypto",
+                    PasswordHash = Hmac512Provider.Compute("roottoor")
+                };
+                context.Users.Add(user);
+                context.SaveChanges();
+            }
         }
     }
 }
