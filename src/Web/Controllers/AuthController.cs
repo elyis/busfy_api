@@ -1,3 +1,4 @@
+using System.Net;
 using busfy_api.src.App.IService;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Shared;
@@ -36,9 +37,19 @@ namespace busfy_api.src.Web.Controllers
         )
         {
             string role = Enum.GetName(UserRole.User)!;
+
+            string ipAddress = "Unknown";
+            var forwardedHeaders = HttpContext.Request.Headers["X-Forwarded-For"];
+            if (!string.IsNullOrEmpty(forwardedHeaders))
+            {
+                var forwardedIp = forwardedHeaders.FirstOrDefault();
+                if (!string.IsNullOrEmpty(forwardedIp))
+                    ipAddress = IPAddress.Parse(forwardedIp).ToString();
+            }
+
             var sessionBody = new CreateUserSessionBody
             {
-                Host = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+                Host = ipAddress,
                 UserAgent = HttpContext.Request.Headers.UserAgent.ToString(),
             };
 
@@ -77,9 +88,18 @@ namespace busfy_api.src.Web.Controllers
         [HttpPost("signin")]
         public async Task<IActionResult> SignInAsync(SignInBody signInBody)
         {
+            string ipAddress = "Unknown";
+            var forwardedHeaders = HttpContext.Request.Headers["X-Forwarded-For"];
+            if (!string.IsNullOrEmpty(forwardedHeaders))
+            {
+                var forwardedIp = forwardedHeaders.FirstOrDefault();
+                if (!string.IsNullOrEmpty(forwardedIp))
+                    ipAddress = IPAddress.Parse(forwardedIp).ToString();
+            }
+
             var sessionBody = new CreateUserSessionBody
             {
-                Host = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+                Host = ipAddress,
                 UserAgent = HttpContext.Request.Headers.UserAgent.ToString(),
             };
 
