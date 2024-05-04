@@ -12,8 +12,8 @@ using busfy_api.src.Infrastructure.Data;
 namespace busfy_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240504192801_change_post_primary_key")]
-    partial class change_post_primary_key
+    [Migration("20240504193947_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
