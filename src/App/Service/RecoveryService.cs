@@ -77,5 +77,36 @@ namespace busfy_api.src.App.Service
             var result = await _userRepository.ResetPasswordAndRemoveSessions(body);
             return result != null;
         }
+
+        public async Task<bool> SendConfirmationCodeAsync(string email, string code)
+        {
+            try
+            {
+                await _emailService.SendMessage(
+                            email,
+                            "Confirm registration account",
+                            $"Confirmation code: {code}"
+                        );
+                return true;
+            }
+            catch (AuthenticationException ex)
+            {
+                _logger.LogError($"invalid data: {ex.Message}");
+            }
+            catch (SmtpCommandException ex)
+            {
+                _logger.LogError($"Auth error: {ex.Message}");
+            }
+            catch (SmtpProtocolException ex)
+            {
+                _logger.LogError("Protocol error while trying to authenticate: {0}", ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Ex: {ex.Message}");
+            }
+
+            return false;
+        }
     }
 }

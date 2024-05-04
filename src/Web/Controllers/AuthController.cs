@@ -60,16 +60,12 @@ namespace busfy_api.src.Web.Controllers
             var confirmationCode = rnd.Next(100_000, 1_000_000).ToString();
 
             var response = await _authService.CreateConfirmationAccount(signUpBody, confirmationCode);
-            if (response is OkObjectResult result)
+            if (response is OkResult result)
             {
-                var confirmationBody = new RecoveryBody
-                {
-                    Email = signUpBody.Email,
-                };
-
-                await _recoveryService.SendRecoveryCodeAsync(confirmationBody);
+                await _recoveryService.SendConfirmationCodeAsync(signUpBody.Email, confirmationCode);
+                return Ok();
             }
-            return response;
+            return BadRequest();
         }
 
 
