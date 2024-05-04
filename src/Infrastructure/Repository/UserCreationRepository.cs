@@ -135,6 +135,13 @@ namespace busfy_api.src.Infrastructure.Repository
                 .ToListAsync();
         }
 
+        public async Task<int> GetCountLikes(Guid id)
+        {
+            return await _context.UserCreationLikes
+                .Where(e => e.CreationId == id)
+                .CountAsync();
+        }
+
         public async Task<int> GetCountUserCreations(Guid userId, IEnumerable<ContentSubscriptionType> types)
         {
             var temp = types.Distinct().Select(e => e.ToString());

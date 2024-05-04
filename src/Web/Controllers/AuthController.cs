@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using busfy_api.src.App.IService;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Shared;
@@ -39,8 +38,8 @@ namespace busfy_api.src.Web.Controllers
             string role = Enum.GetName(UserRole.User)!;
             var sessionBody = new CreateUserSessionBody
             {
-                Host = Request.Host.Host,
-                UserAgent = Request.Headers.UserAgent.ToString(),
+                Host = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+                UserAgent = HttpContext.Request.Headers.UserAgent.ToString(),
             };
 
             var result = await _authService.SignUp(body.Email, body.ConfirmationCode, sessionBody, role);
@@ -80,8 +79,8 @@ namespace busfy_api.src.Web.Controllers
         {
             var sessionBody = new CreateUserSessionBody
             {
-                Host = Request.Host.Host,
-                UserAgent = Request.Headers.UserAgent.ToString(),
+                Host = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+                UserAgent = HttpContext.Request.Headers.UserAgent.ToString(),
             };
 
             var result = await _authService.SignIn(signInBody, sessionBody);

@@ -143,6 +143,18 @@ namespace busfy_api.src.Web.Controllers
             });
         }
 
+        [HttpGet("content/likes")]
+        [SwaggerOperation("Получить число лайков в посте")]
+        [SwaggerResponse(200, Type = typeof(int))]
+        public async Task<IActionResult> GetCountLikes([FromQuery, Required] Guid postId)
+        {
+            var count = await _userCreationRepository.GetCountLikes(postId);
+            return Ok(new
+            {
+                count
+            });
+        }
+
         [HttpPost("like/content"), Authorize]
         [SwaggerOperation("Оценить контент пользователя")]
         [SwaggerResponse(200)]

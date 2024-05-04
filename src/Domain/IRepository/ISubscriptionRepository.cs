@@ -8,7 +8,9 @@ namespace busfy_api.src.Domain.IRepository
         Task<SubscriptionToAdditionalContent?> GetAsync(Guid id);
         Task<Subscription?> GetSubscriptionAsync(Guid subId, Guid authorid);
         Task<Subscription?> AddSubscriptionAsync(UserModel sub, UserModel author);
-        Task<IEnumerable<Subscription>> GetSubscriptionsWithAuthorAsync(Guid subId);
+        Task<int> GetSubscriptionsCount(Guid subId);
+        Task<int> GetCountSubscriptionsByAuthor(Guid id);
+        Task<IEnumerable<Subscription>> GetSubscriptionsWithAuthorAsync(Guid subId, int count, int offset);
         Task<IEnumerable<SubscriptionToAdditionalContent>> GetSubscriptionsCreatedByUser(Guid userId, int count, int offset);
         Task<IEnumerable<UserSubscription>> GetSubscriptionsByUserAndSubscription(Guid userId, int count, int offset);
         Task<SubscriptionToAdditionalContent?> AddAsync(CreateSubscriptionBody body, UserModel creator);

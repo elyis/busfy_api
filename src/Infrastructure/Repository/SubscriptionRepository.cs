@@ -124,11 +124,26 @@ namespace busfy_api.src.Infrastructure.Repository
             return subscription;
         }
 
-        public async Task<IEnumerable<Subscription>> GetSubscriptionsWithAuthorAsync(Guid subId)
+        public async Task<IEnumerable<Subscription>> GetSubscriptionsWithAuthorAsync(Guid subId, int count, int offset)
         {
             return await _context.Subscriptions
                 .Where(e => e.SubId == subId)
+                .Skip(offset)
+                .Take(count)
                 .ToListAsync();
+        }
+
+        public async Task<int> GetCountSubscriptionsByAuthor(Guid id)
+        {
+            return await _context.Subscriptions
+                .Where(e => e.AuthorId == id)
+                .CountAsync();
+        }
+        public async Task<int> GetSubscriptionsCount(Guid subId)
+        {
+            return await _context.Subscriptions
+                .Where(e => e.SubId == subId)
+                .CountAsync();
         }
 
         public async Task<bool> RemoveSubscriptionAsync(Guid subId, Guid authorId)

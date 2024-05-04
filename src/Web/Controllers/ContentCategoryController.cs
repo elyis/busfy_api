@@ -53,7 +53,7 @@ namespace busfy_api.src.Web.Controllers
 
         public async Task<IActionResult> AddContentCategoryToUser(
             [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token,
-            [FromHeader] IEnumerable<string> names
+            [FromBody] IEnumerable<string> names
         )
         {
             if (!names.Any())

@@ -37,7 +37,7 @@ namespace busfy_api.src.Infrastructure.Repository
             return post;
         }
 
-        public async Task<PostComment?> AddPostComment(Post post, UserModel user)
+        public async Task<PostComment?> AddPostComment(Post post, UserModel user, CreateCommentBody body)
         {
             var postComment = await GetPostComment(user.Id, post.Id);
             if (postComment != null || !post.IsCommentingAllowed)
@@ -46,7 +46,8 @@ namespace busfy_api.src.Infrastructure.Repository
             postComment = new PostComment
             {
                 Post = post,
-                User = user
+                User = user,
+                Comment = body.Comment,
             };
 
             postComment = (await _context.PostComments.AddAsync(postComment)).Entity;
@@ -208,6 +209,13 @@ namespace busfy_api.src.Infrastructure.Repository
             return await _context.PostLikes
                 .FirstOrDefaultAsync(e =>
                     e.EvaluatorId == userId && e.PostId == postId);
+        }
+
+        public async Task<int> GetCountLikes(Guid id)
+        {
+            return await _context.PostLikes
+                .Where(e => e.PostId == id)
+                .CountAsync();
         }
 
         public async Task<Post?> UpdateImageAsync(Guid id, string filename, UserCreationType type)

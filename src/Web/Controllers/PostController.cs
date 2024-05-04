@@ -74,7 +74,8 @@ namespace busfy_api.src.Web.Controllers
 
         public async Task<IActionResult> CreatePostComment(
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
-            [FromQuery, Required] Guid postId
+            [FromQuery, Required] Guid postId,
+            CreateCommentBody body
         )
         {
             var post = await _postRepository.GetAsync(postId);
@@ -86,7 +87,7 @@ namespace busfy_api.src.Web.Controllers
             if (user == null)
                 return BadRequest();
 
-            var result = await _postRepository.AddPostComment(post, user);
+            var result = await _postRepository.AddPostComment(post, user, body);
             return result == null ? Conflict() : Ok();
         }
 
@@ -245,6 +246,18 @@ namespace busfy_api.src.Web.Controllers
         }
 
 
+        [HttpGet("post/likes")]
+        [SwaggerOperation("Получить число лайков в посте")]
+        [SwaggerResponse(200, Type = typeof(int))]
+        public async Task<IActionResult> GetCountLikes([FromQuery, Required] Guid postId)
+        {
+            var count = await _postRepository.GetCountLikes(postId);
+            return Ok(new
+            {
+                count
+            });
+        }
+
         [HttpGet("tape/subscriptions"), Authorize]
         [SwaggerResponse(200, Type = typeof(PaginationResponse<PostBody>))]
 
@@ -257,7 +270,7 @@ namespace busfy_api.src.Web.Controllers
         {
             var tokenPayload = _jwtService.GetTokenPayload(token);
 
-            var subscriptions = await _subscriptionRepository.GetSubscriptionsWithAuthorAsync(tokenPayload.UserId);
+            var subscriptions = await _subscriptionRepository.GetSubscriptionsWithAuthorAsync(tokenPayload.UserId, count, offset);
             var creatorIds = subscriptions.Select(e => e.AuthorId);
 
             var posts = await _postRepository.GetAllByCreators(creatorIds, count, offset, isDescending);

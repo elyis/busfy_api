@@ -68,15 +68,36 @@ namespace busfy_api.src.Web.Controllers
 
         [HttpGet("subscriptions/user"), Authorize]
         [SwaggerOperation("Получить список подписок на пользователей")]
-        [SwaggerResponse(200, Type = typeof(IEnumerable<ProfileBody>))]
+        [SwaggerResponse(200, Type = typeof(PaginationResponse<ProfileWithFollowersBody>))]
         public async Task<IActionResult> GetSubscriptionUser(
-            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token
+            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
+            [FromQuery, Range(1, int.MaxValue)] int count = 1,
+            [FromQuery, Range(0, int.MaxValue)] int offset = 0
         )
         {
             var tokenInfo = _jwtService.GetTokenPayload(token);
-            var subscriptions = await _subscriptionRepository.GetSubscriptionsWithAuthorAsync(tokenInfo.UserId);
-            var result = subscriptions.Select(e => e.Author.ToProfileBody());
-            return Ok(result);
+            var subscriptions = await _subscriptionRepository.GetSubscriptionsWithAuthorAsync(tokenInfo.UserId, count, offset);
+            var totalSubscriptions = await _subscriptionRepository.GetSubscriptionsCount(tokenInfo.UserId);
+
+            var result = new List<ProfileWithFollowersBody>();
+            foreach (var subscription in subscriptions)
+            {
+                var author = subscription.Author;
+                var subscriberCount = await _subscriptionRepository.GetCountSubscriptionsByAuthor(author.Id);
+                result.Add(new ProfileWithFollowersBody
+                {
+                    Profile = author.ToProfileBody(),
+                    SubscriberCount = subscriberCount
+                });
+            }
+
+            return Ok(new PaginationResponse<ProfileWithFollowersBody>
+            {
+                Count = count,
+                Offset = offset,
+                Total = totalSubscriptions,
+                Items = result
+            });
         }
 
 
