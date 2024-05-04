@@ -19,7 +19,10 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             var account = await Get(body.Email);
             if (account != null)
+            {
+                account.ValidityPeriodCode = DateTime.UtcNow.AddMinutes(5);
                 account.ConfirmationCode = confirmationCode;
+            }
             else
             {
                 account = new UnconfirmedAccount
