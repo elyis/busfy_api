@@ -188,6 +188,7 @@ namespace busfy_api
 
             app.UseMiddleware<CustomStatusCodeMiddleware>();
             app.MapControllers();
+            InitDatabase(_config);
             app.Run();
         }
 

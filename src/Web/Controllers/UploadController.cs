@@ -103,7 +103,7 @@ namespace busfy_api.src.Web.Controllers
         public async Task<IActionResult> GetBackgroundImage(string filename)
             => await GetIconAsync(Constants.localPathToBackground, filename);
 
-        [HttpPost("upload/content-category"), Authorize(Roles = nameof(UserRole.Admin))]
+        [HttpPost("content-category"), Authorize(Roles = nameof(UserRole.Admin))]
         [SwaggerOperation("Загрузить изображение категории контента")]
         [SwaggerResponse(200)]
         [SwaggerResponse(400)]
@@ -128,7 +128,7 @@ namespace busfy_api.src.Web.Controllers
 
         }
 
-        [HttpGet("upload/content/private/{filename}"), Authorize]
+        [HttpGet("content/private/{filename}"), Authorize]
         [SwaggerResponse(200)]
         [SwaggerResponse(400, Description = "Получаемый контент публичный")]
         [SwaggerResponse(403, Description = "Нет подписки")]
@@ -207,7 +207,7 @@ namespace busfy_api.src.Web.Controllers
             return filename == null ? BadRequest("Failed to upload the file") : Ok(filename);
         }
 
-        [HttpGet("upload/content/pub/{filename}")]
+        [HttpGet("content/pub/{filename}")]
         [SwaggerResponse(200)]
 
         public async Task<IActionResult> GetPublicFileContent([Required] string filename)
@@ -215,7 +215,7 @@ namespace busfy_api.src.Web.Controllers
             return await GetFileAsync(Constants.localPathToPublicContentFiles, filename);
         }
 
-        [HttpPost("upload/content"), Authorize]
+        [HttpPost("content"), Authorize]
         [SwaggerOperationFilter(typeof(UploadedFileContentTypesOperationFilter))]
         [SwaggerResponse(200, Type = typeof(Guid))]
         [SwaggerResponse(400)]
@@ -292,7 +292,7 @@ namespace busfy_api.src.Web.Controllers
             return Ok(userCreation.Id);
         }
 
-        [HttpGet("upload/post/{filename}")]
+        [HttpGet("post/{filename}")]
         [SwaggerResponse(200)]
 
         public async Task<IActionResult> GetPost([Required] string filename)

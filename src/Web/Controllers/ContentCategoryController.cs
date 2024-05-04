@@ -35,7 +35,7 @@ namespace busfy_api.src.Web.Controllers
 
         [HttpPost("content-category"), Authorize(Roles = nameof(UserRole.Admin))]
         [SwaggerOperation("Создать категорию контента")]
-        [SwaggerResponse(200)]
+        [SwaggerResponse(200, Type = typeof(ContentCategoryBody))]
         [SwaggerResponse(409)]
 
         public async Task<IActionResult> AddContentCategory([FromBody] CreateContentCategoryBody body)
@@ -44,7 +44,7 @@ namespace busfy_api.src.Web.Controllers
             if (category == null)
                 return Conflict("Category already exists");
 
-            return Ok(category);
+            return Ok(category.ToContentCategoryBody());
         }
 
         [HttpPost("content-categories/user"), Authorize]
