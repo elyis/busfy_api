@@ -61,7 +61,7 @@ namespace busfy_api.src.Web.Controllers
 
         public async Task<IActionResult> UploadProfileIcon(
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
-            [FromHeader] IFormFile file
+            [FromForm] IFormFile file
         )
         {
             var resultUpload = await UploadIconAsync(Constants.localPathToProfileIcons, file);
@@ -81,7 +81,7 @@ namespace busfy_api.src.Web.Controllers
 
         public async Task<IActionResult> UploadProfileBackground(
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
-            [FromHeader] IFormFile file
+            [FromForm] IFormFile file
         )
         {
             var resultUpload = await UploadIconAsync(Constants.localPathToBackground, file);
@@ -109,7 +109,7 @@ namespace busfy_api.src.Web.Controllers
         [SwaggerResponse(400)]
 
         public async Task<IActionResult> UploadContentCategoryImage(
-            [FromHeader] IFormFile file,
+            [FromForm] IFormFile file,
             [FromQuery] string categoryName
         )
         {
