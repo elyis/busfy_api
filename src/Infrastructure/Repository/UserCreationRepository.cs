@@ -88,6 +88,13 @@ namespace busfy_api.src.Infrastructure.Repository
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
+        public async Task<IEnumerable<UserCreationLike>> GetAllLikes(Guid userId, IEnumerable<Guid> creationIds)
+        {
+            return await _context.UserCreationLikes
+                .Where(e => e.EvaluatorId == userId && creationIds.Contains(e.CreationId))
+                .ToListAsync();
+        }
+
         public async Task<int> GetCountComments(Guid userCreationId)
         {
             return await _context.UserCreationComments

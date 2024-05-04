@@ -114,9 +114,9 @@ namespace busfy_api.src.Web.Controllers
             [FromQuery] int offset = 0
         )
         {
-            var tokenInfo = _jwtService.GetTokenPayload(token);
             var types = new List<ContentSubscriptionType>() { ContentSubscriptionType.Public };
-            if (userId == tokenInfo.UserId)
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+            if (userId == tokenPayload.UserId)
             {
                 types.Add(ContentSubscriptionType.Private);
                 types.Add(ContentSubscriptionType.Single);
@@ -134,12 +134,22 @@ namespace busfy_api.src.Web.Controllers
             var result = await _userCreationRepository.GetUserCreationsAsync(userId, types, count, offset);
             var totalContents = await _userCreationRepository.GetCountUserCreations(userId, types);
 
+            var items = result.Select(e => e.ToUserCreationBody()).ToList();
+            var postIds = items.Select(e => e.Id);
+            var favouritePosts = await _userCreationRepository.GetAllLikes(tokenPayload.UserId, postIds);
+
+            foreach (var favouritePost in favouritePosts)
+            {
+                var temp = items.First(e => e.Id == favouritePost.CreationId);
+                temp.HasEvaluated = true;
+            }
+
             return Ok(new PaginationResponse<UserCreationBody>
             {
                 Count = count,
                 Offset = offset,
                 Total = totalContents,
-                Items = result.Select(e => e.ToUserCreationBody())
+                Items = items
             });
         }
 

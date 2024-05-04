@@ -37,7 +37,7 @@ namespace busfy_api.src.Domain.Models
                 CategoryName = CategoryName,
                 Date = CreatedAt.ToString("s"),
                 ProfileCreator = Creator.ToProfileBody(),
-                UrlImage = Type == UserCreationType.Text.ToString() ? null : $"{Constants.webPathToPostFiles}{Filename}",
+                UrlFile = Type == UserCreationType.Text.ToString() ? null : $"{Constants.webPathToPostFiles}{Filename}",
                 IsCommentingAllowed = IsCommentingAllowed
             };
         }

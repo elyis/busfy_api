@@ -152,7 +152,7 @@ namespace busfy_api.src.Web.Controllers
                 }
             }
 
-            var items = posts.Select(e => e.ToPostBody());
+            var items = posts.Select(e => e.ToPostBody()).ToList();
             if (userId != null)
             {
                 var postIds = items.Select(e => e.Id);
@@ -187,7 +187,7 @@ namespace busfy_api.src.Web.Controllers
         {
             var posts = await _postRepository.GetAllByCategory(name, count, offset, isDescending);
             var totalPosts = await _postRepository.GetCountPostsByCategories(new string[] { name });
-            var items = posts.Select(e => e.ToPostBody());
+            var items = posts.Select(e => e.ToPostBody()).ToList();
 
             if (token != null)
             {
@@ -226,7 +226,7 @@ namespace busfy_api.src.Web.Controllers
             var posts = await _postRepository.GetFavouritePosts(tokenPayload.UserId, count, offset, isDescending);
             var totalPosts = await _postRepository.GetCountFavouritePosts(tokenPayload.UserId);
 
-            var items = posts.Select(e => e.ToPostBody());
+            var items = posts.Select(e => e.ToPostBody()).ToList();
             var postIds = items.Select(e => e.Id);
             var favouritePosts = await _postRepository.GetAllLikes(tokenPayload.UserId, postIds);
 
@@ -275,7 +275,7 @@ namespace busfy_api.src.Web.Controllers
 
             var posts = await _postRepository.GetAllByCreators(creatorIds, count, offset, isDescending);
             var totalPosts = await _postRepository.GetCountPostByCreators(creatorIds);
-            var items = posts.Select(e => e.ToPostBody());
+            var items = posts.Select(e => e.ToPostBody()).ToList();
 
             var postIds = items.Select(e => e.Id);
             var favouritePosts = await _postRepository.GetAllLikes(tokenPayload.UserId, postIds);

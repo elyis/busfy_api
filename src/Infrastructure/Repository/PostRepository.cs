@@ -178,7 +178,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<int> GetCountPosts()
         {
-            return await _context.Posts.CountAsync();
+            return await _context.Posts.CountAsync(e => e.IsFormed);
         }
 
         public async Task<int> GetCountPostsByCategories(IEnumerable<string> categories)

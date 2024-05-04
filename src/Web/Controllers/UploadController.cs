@@ -300,7 +300,7 @@ namespace busfy_api.src.Web.Controllers
             return await GetFileAsync(Constants.localPathToPostFiles, filename);
         }
 
-        [HttpPost("upload/post"), Authorize]
+        [HttpPost("post"), Authorize]
         [SwaggerOperationFilter(typeof(UploadedFileContentTypesOperationFilter))]
         [SwaggerResponse(200)]
         [SwaggerResponse(400)]
@@ -308,7 +308,7 @@ namespace busfy_api.src.Web.Controllers
 
         public async Task<IActionResult> UploadPost(
             [FromForm, Required] IFormFile file,
-            [FromHeader, Required] Guid postId,
+            [FromQuery, Required] Guid postId,
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token)
         {
             var tokenInfo = _jwtService.GetTokenPayload(token);
@@ -319,7 +319,7 @@ namespace busfy_api.src.Web.Controllers
             if (post?.CreatorId != tokenInfo.UserId)
                 return Forbid();
 
-            if (post.IsFormed && post.Type == UserCreationType.Text.ToString())
+            if (post.IsFormed)
                 return BadRequest();
 
             string? fileExtension = null;

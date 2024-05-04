@@ -8,7 +8,7 @@ namespace busfy_api.src.Domain.Entities.Response
         public string? Description { get; set; }
         public string? Text { get; set; }
         public UserCreationType Type { get; set; }
-        public string? UrlImage { get; set; }
+        public string? UrlFile { get; set; }
         public string CategoryName { get; set; }
         public bool IsCommentingAllowed { get; set; }
         public string Date { get; set; }
