@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using busfy_api.src.Domain.Entities.Response;
 using busfy_api.src.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace busfy_api.src.Domain.Models
 {
@@ -29,13 +30,21 @@ namespace busfy_api.src.Domain.Models
         public string? BackgroundImage { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [JsonIgnore]
         public List<UserSession> Sessions { get; set; } = new List<UserSession>();
+        [JsonIgnore]
         public List<UserCreation> Creations { get; set; } = new List<UserCreation>();
+        [JsonIgnore]
         public List<Post> Posts { get; set; } = new List<Post>();
+        [JsonIgnore]
         public List<Subscription> Subscriptions { get; set; } = new();
+        [JsonIgnore]
         public List<UserCreationLike> Likes { get; set; } = new List<UserCreationLike>();
+        [JsonIgnore]
         public List<UserCreationComment> Comments { get; set; } = new List<UserCreationComment>();
+        [JsonIgnore]
         public List<PostLike> PostLikes { get; set; } = new List<PostLike>();
+        [JsonIgnore]
         public List<PostComment> PostComments { get; set; } = new List<PostComment>();
 
         public ProfileBody ToProfileBody()

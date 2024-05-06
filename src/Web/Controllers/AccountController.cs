@@ -41,7 +41,7 @@ namespace busfy_api.src.Web.Controllers
 
         [HttpGet("account/userTag")]
         [SwaggerOperation("Получить пользователя по тегу")]
-        [SwaggerResponse(200)]
+        [SwaggerResponse(200, Type = typeof(ProfileBody))]
         [SwaggerResponse(404)]
 
         public async Task<IActionResult> GetUserByUserTag(
@@ -49,7 +49,7 @@ namespace busfy_api.src.Web.Controllers
         )
         {
             var user = await _userRepository.GetUserByUserTag(tag);
-            return user == null ? NotFound() : Ok(user);
+            return user == null ? NotFound() : Ok(user.ToProfileBody());
         }
 
         [HttpGet("accounts/nickname")]

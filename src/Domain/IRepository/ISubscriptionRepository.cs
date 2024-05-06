@@ -5,7 +5,7 @@ namespace busfy_api.src.Domain.IRepository
 {
     public interface ISubscriptionToAdditionalContentRepository
     {
-        Task<SubscriptionToAdditionalContent?> GetAsync(Guid id);
+        Task<SubscriptionToAdditionalContent?> GetSubscriptionToAdditionalContentAsync(Guid id);
         Task<Subscription?> GetSubscriptionAsync(Guid subId, Guid authorid);
         Task<Subscription?> AddSubscriptionAsync(UserModel sub, UserModel author);
         Task<int> GetSubscriptionsCount(Guid subId);

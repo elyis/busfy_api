@@ -1,5 +1,6 @@
 using busfy_api.src.Domain.Entities.Response;
 using busfy_api.src.Domain.Enums;
+using Newtonsoft.Json;
 
 namespace busfy_api.src.Domain.Models
 {
@@ -20,7 +21,9 @@ namespace busfy_api.src.Domain.Models
         public Guid CreatorId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [JsonIgnore]
         public List<PostLike> Likes { get; set; } = new List<PostLike>();
+        [JsonIgnore]
         public List<PostComment> Comments { get; set; } = new List<PostComment>();
 
         public PostBody ToPostBody()

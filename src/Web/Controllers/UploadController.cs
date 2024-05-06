@@ -350,7 +350,7 @@ namespace busfy_api.src.Web.Controllers
                 return BadRequest("Failed to upload the file");
 
             UserCreationType type = GetUserCreationType(fileExtension);
-            post = await _postRepository.UpdateImageAsync(postId, filename, type);
+            post = await _postRepository.UpdateFileAsync(postId, filename, type);
             return Ok();
         }
 

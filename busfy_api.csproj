@@ -10,6 +10,7 @@
     <PackageReference Include="IPinfo" Version="3.0.0" />
     <PackageReference Include="MailKit" Version="4.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.4" />
     <PackageReference Include="Mime-Detective" Version="23.10.1" />
     <PackageReference Include="Mime-Detective.Definitions.Condensed" Version="23.10.1" />
     <PackageReference Include="MimeKit" Version="4.4.0" />

@@ -1,5 +1,6 @@
 using busfy_api.src.Domain.Entities.Response;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace busfy_api.src.Domain.Models
 {
@@ -9,7 +10,10 @@ namespace busfy_api.src.Domain.Models
         public string Name { get; set; }
         public string? Image { get; set; }
 
+        [JsonIgnore]
         public List<UserCreation> UserCreations { get; set; } = new List<UserCreation>();
+
+        [JsonIgnore]
         public List<Post> Posts { get; set; } = new List<Post>();
 
 

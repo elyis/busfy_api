@@ -4,16 +4,28 @@ using busfy_api.src.Domain.IRepository;
 using busfy_api.src.Domain.Models;
 using busfy_api.src.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 
 namespace busfy_api.src.Infrastructure.Repository
 {
     public class PostRepository : IPostRepository
     {
         private readonly AppDbContext _context;
+        private readonly IDistributedCache _distributedCache;
+        private readonly string _prefix = "post:";
+        private readonly DistributedCacheEntryOptions _options = new()
+        {
+            SlidingExpiration = TimeSpan.FromMinutes(3),
+            AbsoluteExpiration = DateTime.UtcNow.AddMinutes(6)
+        };
 
-        public PostRepository(AppDbContext context)
+        public PostRepository(
+            AppDbContext context,
+            IDistributedCache distributedCache)
         {
             _context = context;
+            _distributedCache = distributedCache;
         }
 
         public async Task<Post> AddAsync(CreatePostBody body, UserModel creator, ContentCategory category)
@@ -33,6 +45,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             post = (await _context.Posts.AddAsync(post)).Entity;
             await _context.SaveChangesAsync();
+            await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _options);
 
             return post;
         }
@@ -157,9 +170,29 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<Post?> GetAsync(Guid id)
         {
-            return await _context.Posts
+            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
+            Post? post = null;
+
+            if (!string.IsNullOrEmpty(cachedString))
+            {
+                post = DeserializeObject<Post>(cachedString);
+                if (post != null)
+                {
+                    _context.Attach(post);
+                    return post;
+                }
+            }
+
+            post = await _context.Posts
                 .Include(e => e.Creator)
                 .FirstOrDefaultAsync(e => e.Id == id);
+            if (post != null)
+            {
+                var resultString = SerializeObject(post);
+                await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", resultString, _options);
+            }
+
+            return post;
         }
 
         public async Task<int> GetCountFavouritePosts(Guid userId)
@@ -226,7 +259,7 @@ namespace busfy_api.src.Infrastructure.Repository
                 .CountAsync();
         }
 
-        public async Task<Post?> UpdateImageAsync(Guid id, string filename, UserCreationType type)
+        public async Task<Post?> UpdateFileAsync(Guid id, string filename, UserCreationType type)
         {
             var post = await GetAsync(id);
             if (post == null || string.IsNullOrWhiteSpace(filename))
@@ -237,6 +270,7 @@ namespace busfy_api.src.Infrastructure.Repository
             post.Type = type.ToString();
 
             await _context.SaveChangesAsync();
+            await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _options);
             return post;
         }
 
@@ -265,5 +299,17 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Where(e => e.PostId == postId)
                 .CountAsync();
         }
+
+        private static string SerializeObject(object obj)
+        {
+            return JsonConvert.SerializeObject(obj);
+        }
+
+        private static T? DeserializeObject<T>(string json)
+        {
+            return JsonConvert.DeserializeObject<T>(json);
+        }
     }
+
+
 }

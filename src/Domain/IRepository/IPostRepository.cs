@@ -7,7 +7,7 @@ namespace busfy_api.src.Domain.IRepository
     public interface IPostRepository
     {
         Task<Post> AddAsync(CreatePostBody body, UserModel creator, ContentCategory category);
-        Task<Post?> UpdateImageAsync(Guid id, string filename, UserCreationType type);
+        Task<Post?> UpdateFileAsync(Guid id, string filename, UserCreationType type);
         Task<int> GetCountPosts();
         Task<int> GetCountLikes(Guid id);
         Task<int> GetCountLikesByAuthor(Guid userId);

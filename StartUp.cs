@@ -38,6 +38,7 @@ namespace busfy_api
             var emailServiceSettings = _config.GetSection(nameof(EmailServiceSettings)).Get<EmailServiceSettings>() ?? throw new Exception("email service settings is empty");
             var locationServiceSettings = _config.GetSection("LocationServiceSettings").Get<LocationServiceSettings>() ?? throw new Exception("location service settings is empty");
 
+
             var fileInspector = new ContentInspectorBuilder()
             {
                 Definitions = new MimeDetective.Definitions.CondensedBuilder()
@@ -57,6 +58,8 @@ namespace busfy_api
         {
             ConfigureConfigServise(services);
             var jwtSettings = _config.GetSection("JwtSettings").Get<JwtSettings>() ?? throw new Exception("jwt settings is empty");
+            var redisSettings = _config.GetSection("RedisSettings").Get<RedisSettings>() ?? throw new Exception("redis settings is empty");
+
             services.AddControllers(config =>
             {
                 config.OutputFormatters.RemoveType<HttpNoContentOutputFormatter>();
@@ -78,6 +81,11 @@ namespace busfy_api
             });
             services.AddEndpointsApiExplorer();
             services.AddDbContext<AppDbContext>();
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisSettings.ConnectionString;
+                options.InstanceName = redisSettings.InstanceName;
+            });
 
             services
                 .AddAuthentication(options =>

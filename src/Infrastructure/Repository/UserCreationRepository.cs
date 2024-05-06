@@ -4,16 +4,28 @@ using busfy_api.src.Domain.IRepository;
 using busfy_api.src.Domain.Models;
 using busfy_api.src.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 
 namespace busfy_api.src.Infrastructure.Repository
 {
     public class UserCreationRepository : IUserCreationRepository
     {
         private readonly AppDbContext _context;
+        private readonly IDistributedCache _distributedCache;
+        private readonly string _prefix = "creation:";
+        private readonly DistributedCacheEntryOptions _options = new()
+        {
+            SlidingExpiration = TimeSpan.FromMinutes(3),
+            AbsoluteExpiration = DateTime.UtcNow.AddMinutes(6)
+        };
 
-        public UserCreationRepository(AppDbContext context)
+        public UserCreationRepository(
+            AppDbContext context,
+            IDistributedCache distributedCache)
         {
             _context = context;
+            _distributedCache = distributedCache;
         }
 
         public async Task<int> GetCountLikesByAuthor(Guid userId)
@@ -38,6 +50,9 @@ namespace busfy_api.src.Infrastructure.Repository
             };
 
             userCreation = (await _context.UserCreations.AddAsync(userCreation)).Entity;
+            var resultString = SerializeObject(userCreation);
+            await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _options);
+
             await _context.SaveChangesAsync();
 
             return userCreation;
@@ -54,6 +69,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             _context.UserCreations.Remove(userCreation);
             await _context.SaveChangesAsync();
+            await _distributedCache.RemoveAsync($"{_prefix}{id}");
 
             return true;
         }
@@ -129,9 +145,31 @@ namespace busfy_api.src.Infrastructure.Repository
         }
 
         public async Task<UserCreation?> GetAsync(Guid id)
-            => await _context.UserCreations
+        {
+            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
+            UserCreation? userCreation = null;
+
+            if (!string.IsNullOrEmpty(cachedString))
+            {
+                userCreation = DeserializeObject<UserCreation>(cachedString);
+                if (userCreation != null)
+                {
+                    _context.Attach(userCreation);
+                    return userCreation;
+                }
+            }
+
+            userCreation = await _context.UserCreations
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
+            if (userCreation != null)
+            {
+                var resultString = SerializeObject(userCreation);
+                await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _options);
+            }
+
+            return userCreation;
+        }
 
 
         public async Task<IEnumerable<UserCreation>> GetUserCreationsAsync(Guid userId, IEnumerable<ContentSubscriptionType> types, int count, int offset)
@@ -178,6 +216,9 @@ namespace busfy_api.src.Infrastructure.Repository
             userCreation.IsFormed = true;
 
             await _context.SaveChangesAsync();
+            var resultString = SerializeObject(userCreation);
+            await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _options);
+
             return userCreation;
         }
 
@@ -189,8 +230,20 @@ namespace busfy_api.src.Infrastructure.Repository
 
             userCreation.Description = description;
             await _context.SaveChangesAsync();
+            var resultString = SerializeObject(userCreation);
+            await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _options);
 
             return userCreation;
+        }
+
+        private static string SerializeObject(object obj)
+        {
+            return JsonConvert.SerializeObject(obj);
+        }
+
+        private static T? DeserializeObject<T>(string json)
+        {
+            return JsonConvert.DeserializeObject<T>(json);
         }
     }
 }

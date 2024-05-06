@@ -4,6 +4,8 @@ using busfy_api.src.Domain.IRepository;
 using busfy_api.src.Domain.Models;
 using busfy_api.src.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 using webApiTemplate.src.App.Provider;
 
 namespace busfy_api.src.Infrastructure.Repository
@@ -11,11 +13,21 @@ namespace busfy_api.src.Infrastructure.Repository
     public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context;
+        private readonly IDistributedCache _distributedCache;
         private const int _countDaysForSessionVerification = 7;
+        private const string _prefix = "user:";
+        private readonly DistributedCacheEntryOptions _options = new()
+        {
+            SlidingExpiration = TimeSpan.FromMinutes(3),
+            AbsoluteExpiration = DateTime.UtcNow.AddMinutes(6)
+        };
 
-        public UserRepository(AppDbContext context)
+        public UserRepository(
+            AppDbContext context,
+            IDistributedCache distributedCache)
         {
             _context = context;
+            _distributedCache = distributedCache;
         }
 
         public async Task<UserModel?> UpdateProfileAsync(UpdateProfileBody body, Guid id)
@@ -31,6 +43,8 @@ namespace busfy_api.src.Infrastructure.Repository
             user.Bio = body.Bio;
 
             await _context.SaveChangesAsync();
+            await CacheUser(user);
+
             return user;
         }
 
@@ -51,6 +65,9 @@ namespace busfy_api.src.Infrastructure.Repository
 
             var result = await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
+
+            await CacheUser(user);
+
             return result?.Entity;
         }
 
@@ -71,6 +88,7 @@ namespace busfy_api.src.Infrastructure.Repository
             user.RestoreCodeValidBefore = DateTime.UtcNow.Add(interval.Value);
             user.WasPasswordResetRequest = true;
             await _context.SaveChangesAsync();
+            await CacheUser(user);
 
             return user.RestoreCode;
         }
@@ -119,6 +137,7 @@ namespace busfy_api.src.Infrastructure.Repository
             var sessions = await GetUserSessions(user.Id);
             _context.UserSessions.RemoveRange(sessions);
             await _context.SaveChangesAsync();
+            await CacheUser(user);
 
             return user;
         }
@@ -154,17 +173,57 @@ namespace busfy_api.src.Infrastructure.Repository
         }
 
         public async Task<UserModel?> GetAsync(Guid id)
-            => await _context.Users
+        {
+            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
+            UserModel? user = null;
+
+            if (!string.IsNullOrEmpty(cachedString))
+            {
+                user = DeserializeObject<UserModel>(cachedString);
+                if (user != null)
+                {
+                    _context.Attach(user);
+                    return user;
+                }
+            }
+
+            user = await _context.Users
                 .FirstOrDefaultAsync(e => e.Id == id);
+            if (user != null)
+                await CacheUser(user);
+
+            return user;
+        }
 
         public async Task<UserModel?> GetAsync(string email)
-            => await _context.Users
+        {
+            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{email}");
+            UserModel? user = null;
+
+            if (!string.IsNullOrEmpty(cachedString))
+            {
+                user = DeserializeObject<UserModel>(cachedString);
+                if (user != null)
+                {
+                    _context.Attach(user);
+                    return user;
+                }
+            }
+
+            user = await _context.Users
                 .FirstOrDefaultAsync(e => e.Email == email);
+            if (user != null)
+                await CacheUser(user);
+
+            return user;
+        }
 
         public async Task<UserSession?> GetUserSessionByTokenAndUserAsync(string refreshTokenHash)
-            => await _context.UserSessions
-            .Include(e => e.User)
-            .FirstOrDefaultAsync(e => e.Token == refreshTokenHash);
+        {
+            return await _context.UserSessions
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Token == refreshTokenHash);
+        }
 
         public async Task<UserSession?> GetUserSession(Guid id)
         => await _context.UserSessions
@@ -178,6 +237,8 @@ namespace busfy_api.src.Infrastructure.Repository
 
             user.Image = filename;
             await _context.SaveChangesAsync();
+
+            await CacheUser(user);
             return user;
         }
 
@@ -235,7 +296,24 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<UserModel?> GetUserByUserTag(string userTag)
         {
-            return await _context.Users.FirstOrDefaultAsync(e => e.UserTag == userTag);
+            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{userTag}");
+            UserModel? user = null;
+
+            if (!string.IsNullOrEmpty(cachedString))
+            {
+                user = DeserializeObject<UserModel>(cachedString);
+                if (user != null)
+                {
+                    _context.Attach(user);
+                    return user;
+                }
+            }
+
+            user = await _context.Users.FirstOrDefaultAsync(e => e.UserTag == userTag);
+            if (user != null)
+                await CacheUser(user);
+
+            return user;
         }
 
         public async Task<UserModel?> UpdateUserTag(Guid userId, string userTag)
@@ -251,6 +329,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             user.UserTag = userTag;
             await _context.SaveChangesAsync();
+            await CacheUser(user);
             return user;
         }
 
@@ -284,8 +363,28 @@ namespace busfy_api.src.Infrastructure.Repository
 
             user.BackgroundImage = filename;
             await _context.SaveChangesAsync();
+            await CacheUser(user);
 
             return user;
+        }
+
+        private static string SerializeObject(object obj)
+        {
+            return JsonConvert.SerializeObject(obj);
+        }
+
+        private static T? DeserializeObject<T>(string json)
+        {
+            return JsonConvert.DeserializeObject<T>(json);
+        }
+
+        private async Task CacheUser(UserModel user)
+        {
+            var resultString = SerializeObject(user);
+            await _distributedCache.SetStringAsync($"{_prefix}{user.Email}", resultString, _options);
+            await _distributedCache.SetStringAsync($"{_prefix}{user.Id}", resultString, _options);
+            if (user.UserTag != null)
+                await _distributedCache.SetStringAsync($"{_prefix}{user.UserTag}", resultString, _options);
         }
     }
 }

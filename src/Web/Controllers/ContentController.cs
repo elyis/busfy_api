@@ -156,9 +156,9 @@ namespace busfy_api.src.Web.Controllers
         [HttpGet("content/likes")]
         [SwaggerOperation("Получить число лайков в посте")]
         [SwaggerResponse(200, Type = typeof(int))]
-        public async Task<IActionResult> GetCountLikes([FromQuery, Required] Guid postId)
+        public async Task<IActionResult> GetCountLikes([FromQuery, Required] Guid contentId)
         {
-            var count = await _userCreationRepository.GetCountLikes(postId);
+            var count = await _userCreationRepository.GetCountLikes(contentId);
             return Ok(new
             {
                 count

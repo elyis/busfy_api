@@ -91,6 +91,16 @@ namespace busfy_api.src.Web.Controllers
             return result == null ? Conflict() : Ok();
         }
 
+        [HttpGet("post/{id}")]
+        [SwaggerOperation("Получить пост по id")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(404)]
+        public async Task<IActionResult> GetPostById(Guid id)
+        {
+            var post = await _postRepository.GetAsync(id);
+            return post == null ? NotFound() : Ok(post.ToPostBody());
+        }
+
         [HttpPost("post/like"), Authorize]
         [SwaggerOperation("Оценить пост")]
         [SwaggerResponse(200)]
