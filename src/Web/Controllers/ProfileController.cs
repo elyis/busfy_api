@@ -65,6 +65,23 @@ namespace busfy_api.src.Web.Controllers
             });
         }
 
+        [HttpGet("profile/followers/{userId}")]
+        [SwaggerOperation("Получить профиль")]
+        [SwaggerResponse(200, Description = "Успешно", Type = typeof(int))]
+        [SwaggerResponse(404)]
+
+        public async Task<IActionResult> GetCountFollowersAsync(
+            Guid userId
+        )
+        {
+            var subscriberCount = await _subscriptionToAdditionalContentRepository.GetCountSubscriptionsByAuthor(userId);
+
+            return Ok(new
+            {
+                subscriberCount
+            });
+        }
+
         [HttpGet("profile/{userId}")]
         [SwaggerOperation("Получить профиль")]
         [SwaggerResponse(200, Description = "Успешно", Type = typeof(ProfileWithFollowersAndLikesBody))]
