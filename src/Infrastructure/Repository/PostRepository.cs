@@ -380,6 +380,17 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             return JsonConvert.DeserializeObject<T>(json);
         }
+
+        public async Task<bool> RemoveLike(Guid postId, Guid userId)
+        {
+            var like = await GetPostLike(userId, postId);
+            if (like == null)
+                return true;
+
+            _context.PostLikes.Remove(like);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 
 

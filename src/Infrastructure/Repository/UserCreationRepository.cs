@@ -1,3 +1,4 @@
+using System.Transactions;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Enums;
 using busfy_api.src.Domain.IRepository;
@@ -289,6 +290,18 @@ namespace busfy_api.src.Infrastructure.Repository
         private static T? DeserializeObject<T>(string json)
         {
             return JsonConvert.DeserializeObject<T>(json);
+        }
+
+        public async Task<bool> RemoveLike(Guid userId, Guid creationId)
+        {
+            var like = await GetUserCreationLikeAsync(creationId, userId);
+            if (like == null)
+                return true;
+
+            _context.UserCreationLikes.Remove(like);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

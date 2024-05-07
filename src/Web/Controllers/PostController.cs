@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Response;
+using busfy_api.src.Domain.Enums;
 using busfy_api.src.Domain.IRepository;
 using busfy_api.src.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -103,9 +104,8 @@ namespace busfy_api.src.Web.Controllers
 
         [HttpPost("post/like"), Authorize]
         [SwaggerOperation("Оценить пост")]
-        [SwaggerResponse(200)]
+        [SwaggerResponse(200, Type = typeof(EvaluationStatus))]
         [SwaggerResponse(400)]
-        [SwaggerResponse(409)]
 
         public async Task<IActionResult> CreatePostLike(
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
@@ -121,8 +121,15 @@ namespace busfy_api.src.Web.Controllers
             if (user == null)
                 return BadRequest();
 
-            var result = await _postRepository.AddPostLike(post, user);
-            return result == null ? Conflict() : Ok();
+            var like = await _postRepository.GetPostLike(user.Id, postId);
+            if (like == null)
+            {
+                var result = await _postRepository.AddPostLike(post, user);
+                return Ok(EvaluationStatus.Evaluated);
+            }
+
+            await _postRepository.RemoveLike(postId, user.Id);
+            return Ok(EvaluationStatus.NotEvaluated);
         }
 
         [HttpGet("tape/recommendations")]

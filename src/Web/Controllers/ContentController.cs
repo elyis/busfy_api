@@ -167,7 +167,7 @@ namespace busfy_api.src.Web.Controllers
 
         [HttpPost("like/content"), Authorize]
         [SwaggerOperation("Оценить контент пользователя")]
-        [SwaggerResponse(200)]
+        [SwaggerResponse(200, Type = typeof(EvaluationStatus))]
         [SwaggerResponse(400)]
         [SwaggerResponse(404)]
         [SwaggerResponse(409)]
@@ -188,7 +188,14 @@ namespace busfy_api.src.Web.Controllers
                 return BadRequest();
 
             var like = await _userCreationRepository.CreateUserCreationLikeAsync(user, userCreation);
-            return like == null ? Conflict() : Ok();
+            if (like == null)
+            {
+                var result = await _userCreationRepository.CreateUserCreationLikeAsync(user, userCreation);
+                return Ok(EvaluationStatus.Evaluated);
+            }
+
+            await _userCreationRepository.RemoveLike(user.Id, contentId);
+            return Ok(EvaluationStatus.NotEvaluated);
         }
 
         [HttpPost("comment/content"), Authorize]
