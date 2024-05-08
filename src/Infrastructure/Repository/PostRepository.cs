@@ -61,7 +61,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             var cachedKey = $"{_prefix}likes:user:{userId}";
             var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (string.IsNullOrEmpty(cachedData))
+            if (!string.IsNullOrEmpty(cachedData))
                 return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.Posts
@@ -311,7 +311,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             var cachedKey = $"{_prefix}likes:post:{id}";
             var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (string.IsNullOrEmpty(cachedData))
+            if (!string.IsNullOrEmpty(cachedData))
                 return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.PostLikes
@@ -360,7 +360,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             var cachedKey = $"{_prefix}comments:post:{postId}";
             var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (string.IsNullOrEmpty(cachedData))
+            if (!string.IsNullOrEmpty(cachedData))
                 return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.PostComments

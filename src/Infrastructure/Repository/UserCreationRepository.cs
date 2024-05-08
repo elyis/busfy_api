@@ -40,7 +40,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             var cachedKey = $"{_prefix}likes:user:{userId}";
             var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (string.IsNullOrEmpty(cachedData))
+            if (!string.IsNullOrEmpty(cachedData))
                 return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.UserCreations
@@ -131,7 +131,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             var cachedKey = $"{_prefix}comments:creation:{userCreationId}";
             var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (string.IsNullOrEmpty(cachedData))
+            if (!string.IsNullOrEmpty(cachedData))
                 return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.UserCreationComments
@@ -229,7 +229,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             var cachedKey = $"{_prefix}likes:creation:{id}";
             var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (string.IsNullOrEmpty(cachedData))
+            if (!string.IsNullOrEmpty(cachedData))
                 return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.UserCreationLikes
