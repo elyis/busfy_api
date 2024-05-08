@@ -52,24 +52,24 @@ namespace busfy_api.src.Infrastructure.Repository
 
             post = (await _context.Posts.AddAsync(post)).Entity;
             await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _optionsForSingleEntity);
+            // await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _optionsForSingleEntity);
 
             return post;
         }
 
         public async Task<int> GetCountLikesByAuthor(Guid userId)
         {
-            var cachedKey = $"{_prefix}likes:user:{userId}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<int>(cachedData);
+            // var cachedKey = $"{_prefix}likes:user:{userId}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.Posts
                 .Where(e => e.CreatorId == userId && e.IsFormed)
                 .SelectMany(post => post.Likes)
                 .CountAsync();
 
-            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+            // await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return countLikes;
         }
 
@@ -110,11 +110,11 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<IEnumerable<Post>> GetAll(int count, int offset, bool isDescending)
         {
-            var cachedKey = $"{_prefixForMany}:{count}:{offset}:{isDescending}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // var cachedKey = $"{_prefixForMany}:{count}:{offset}:{isDescending}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
 
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
 
             var query = _context.Posts
                .Include(e => e.Creator)
@@ -130,18 +130,18 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Take(count)
                 .ToListAsync();
 
-            var serializedData = JsonConvert.SerializeObject(posts);
-            await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
+            // var serializedData = JsonConvert.SerializeObject(posts);
+            // await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
             return posts;
         }
 
         public async Task<IEnumerable<Post>> GetAllByCategories(int count, int offset, IEnumerable<string> categoryNames, bool isDescending)
         {
-            var cachedKey = $"{_prefixForMany}{string.Join("_", categoryNames)}:{count}:{offset}:{isDescending}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // var cachedKey = $"{_prefixForMany}{string.Join("_", categoryNames)}:{count}:{offset}:{isDescending}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
 
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
 
             var query = _context.Posts
                 .Include(e => e.Creator)
@@ -157,18 +157,18 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Take(count)
                 .ToListAsync();
 
-            var serializedData = JsonConvert.SerializeObject(posts);
-            await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
+            // var serializedData = JsonConvert.SerializeObject(posts);
+            // await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
             return posts;
         }
 
         public async Task<IEnumerable<Post>> GetAllByCategory(string categoryName, int count, int offset, bool isDescending)
         {
-            var cachedKey = $"{_prefixForMany}{categoryName}:{count}:{offset}:{isDescending}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // var cachedKey = $"{_prefixForMany}{categoryName}:{count}:{offset}:{isDescending}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
 
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
 
             var query = _context.Posts
                 .Include(e => e.Creator)
@@ -184,18 +184,18 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Take(count)
                 .ToListAsync();
 
-            var serializedData = JsonConvert.SerializeObject(posts);
-            await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
+            // var serializedData = JsonConvert.SerializeObject(posts);
+            // await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
             return posts;
         }
 
         public async Task<IEnumerable<Post>> GetAllByCreators(IEnumerable<Guid> creatorIds, int count, int offset, bool isDescending)
         {
-            var cachedKey = $"{_prefixForMany}creators:{string.Join("_", creatorIds)}:{count}:{offset}:{isDescending}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // var cachedKey = $"{_prefixForMany}creators:{string.Join("_", creatorIds)}:{count}:{offset}:{isDescending}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
 
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
 
             var query = _context.Posts
                 .Include(e => e.Creator)
@@ -211,8 +211,8 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Take(count)
                 .ToListAsync();
 
-            var serializedData = JsonConvert.SerializeObject(posts);
-            await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
+            // var serializedData = JsonConvert.SerializeObject(posts);
+            // await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
             return posts;
         }
 
@@ -225,27 +225,27 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<Post?> GetAsync(Guid id)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
             Post? post = null;
 
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                post = DeserializeObject<Post>(cachedString);
-                if (post != null)
-                {
-                    _context.Attach(post);
-                    return post;
-                }
-            }
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     post = DeserializeObject<Post>(cachedString);
+            //     if (post != null)
+            //     {
+            //         _context.Attach(post);
+            //         return post;
+            //     }
+            // }
 
             post = await _context.Posts
                 .Include(e => e.Creator)
                 .FirstOrDefaultAsync(e => e.Id == id);
-            if (post != null)
-            {
-                var resultString = SerializeObject(post);
-                await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", resultString, _optionsForSingleEntity);
-            }
+            // if (post != null)
+            // {
+            //     var resultString = SerializeObject(post);
+            //     await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", resultString, _optionsForSingleEntity);
+            // }
 
             return post;
         }
@@ -309,16 +309,16 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<int> GetCountLikes(Guid id)
         {
-            var cachedKey = $"{_prefix}likes:post:{id}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<int>(cachedData);
+            // var cachedKey = $"{_prefix}likes:post:{id}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.PostLikes
                 .Where(e => e.PostId == id)
                 .CountAsync();
 
-            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+            // await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return countLikes;
         }
 
@@ -333,7 +333,7 @@ namespace busfy_api.src.Infrastructure.Repository
             post.Type = type.ToString();
 
             await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _optionsForSingleEntity);
+            // await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _optionsForSingleEntity);
             return post;
         }
 
@@ -358,16 +358,16 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<int> GetCountComments(Guid postId)
         {
-            var cachedKey = $"{_prefix}comments:post:{postId}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<int>(cachedData);
+            // var cachedKey = $"{_prefix}comments:post:{postId}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.PostComments
                 .Where(e => e.PostId == postId)
                 .CountAsync();
 
-            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+            // await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return countLikes;
         }
 

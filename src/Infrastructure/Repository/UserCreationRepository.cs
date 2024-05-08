@@ -38,17 +38,17 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<int> GetCountLikesByAuthor(Guid userId)
         {
-            var cachedKey = $"{_prefix}likes:user:{userId}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<int>(cachedData);
+            // var cachedKey = $"{_prefix}likes:user:{userId}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.UserCreations
                 .Where(e => e.UserId == userId && e.IsFormed)
                 .SelectMany(post => post.Likes)
                 .CountAsync();
 
-            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+            // await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return countLikes;
         }
         public async Task<UserCreation> AddAsync(CreateUserCreationBody userCreationBody, UserModel user, ContentCategory contentCategory)
@@ -66,9 +66,8 @@ namespace busfy_api.src.Infrastructure.Repository
             };
 
             userCreation = (await _context.UserCreations.AddAsync(userCreation)).Entity;
-            var resultString = SerializeObject(userCreation);
-            await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
-
+            // var resultString = SerializeObject(userCreation);
+            // await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
             await _context.SaveChangesAsync();
 
             return userCreation;
@@ -85,7 +84,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             _context.UserCreations.Remove(userCreation);
             await _context.SaveChangesAsync();
-            await _distributedCache.RemoveAsync($"{_prefix}{id}");
+            // await _distributedCache.RemoveAsync($"{_prefix}{id}");
 
             return true;
         }
@@ -129,16 +128,16 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<int> GetCountComments(Guid userCreationId)
         {
-            var cachedKey = $"{_prefix}comments:creation:{userCreationId}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<int>(cachedData);
+            // var cachedKey = $"{_prefix}comments:creation:{userCreationId}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.UserCreationComments
                 .Where(e => e.CreationId == userCreationId)
                 .CountAsync();
 
-            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+            // await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return countLikes;
         }
 
@@ -170,27 +169,27 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<UserCreation?> GetAsync(Guid id)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
             UserCreation? userCreation = null;
 
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                userCreation = DeserializeObject<UserCreation>(cachedString);
-                if (userCreation != null)
-                {
-                    _context.Attach(userCreation);
-                    return userCreation;
-                }
-            }
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     userCreation = DeserializeObject<UserCreation>(cachedString);
+            //     if (userCreation != null)
+            //     {
+            //         _context.Attach(userCreation);
+            //         return userCreation;
+            //     }
+            // }
 
             userCreation = await _context.UserCreations
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
-            if (userCreation != null)
-            {
-                var resultString = SerializeObject(userCreation);
-                await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
-            }
+            // if (userCreation != null)
+            // {
+            //     var resultString = SerializeObject(userCreation);
+            //     await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
+            // }
 
             return userCreation;
         }
@@ -206,11 +205,11 @@ namespace busfy_api.src.Infrastructure.Repository
             if (!temp.Any())
                 return new List<UserCreation>();
 
-            var cachedKey = $"{_prefixForMany}{userId}:{string.Join("_", temp)}:{count}:{offset}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // var cachedKey = $"{_prefixForMany}{userId}:{string.Join("_", temp)}:{count}:{offset}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
 
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<IEnumerable<UserCreation>>(cachedData);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<IEnumerable<UserCreation>>(cachedData);
 
             var creations = await _context.UserCreations
                 .Include(e => e.User)
@@ -220,23 +219,23 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Take(count)
                 .ToListAsync();
 
-            var serializedData = JsonConvert.SerializeObject(creations);
-            await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
+            // var serializedData = JsonConvert.SerializeObject(creations);
+            // await _distributedCache.SetStringAsync(cachedKey, serializedData, _optionsForEntities);
             return creations;
         }
 
         public async Task<int> GetCountLikes(Guid id)
         {
-            var cachedKey = $"{_prefix}likes:creation:{id}";
-            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            if (!string.IsNullOrEmpty(cachedData))
-                return JsonConvert.DeserializeObject<int>(cachedData);
+            // var cachedKey = $"{_prefix}likes:creation:{id}";
+            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            // if (!string.IsNullOrEmpty(cachedData))
+            //     return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.UserCreationLikes
                 .Where(e => e.CreationId == id)
                 .CountAsync();
 
-            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+            // await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return countLikes;
         }
 
@@ -262,8 +261,8 @@ namespace busfy_api.src.Infrastructure.Repository
             userCreation.IsFormed = true;
 
             await _context.SaveChangesAsync();
-            var resultString = SerializeObject(userCreation);
-            await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
+            // var resultString = SerializeObject(userCreation);
+            // await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
 
             return userCreation;
         }
@@ -276,8 +275,8 @@ namespace busfy_api.src.Infrastructure.Repository
 
             userCreation.Description = description;
             await _context.SaveChangesAsync();
-            var resultString = SerializeObject(userCreation);
-            await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
+            // var resultString = SerializeObject(userCreation);
+            // await _distributedCache.SetStringAsync($"{_prefix}{userCreation.Id}", resultString, _optionsForSingleEntity);
 
             return userCreation;
         }
