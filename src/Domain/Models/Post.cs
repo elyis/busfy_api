@@ -41,6 +41,7 @@ namespace busfy_api.src.Domain.Models
                 Date = CreatedAt.ToString("s"),
                 ProfileCreator = Creator.ToProfileBody(),
                 UrlFile = Type == UserCreationType.Text.ToString() ? null : $"{Constants.webPathToPostFiles}{Filename}",
+                SubscriptionType = Enum.Parse<ContentSubscriptionType>(ContentSubscriptionType),
                 IsCommentingAllowed = IsCommentingAllowed
             };
         }

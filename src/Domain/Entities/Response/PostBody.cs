@@ -13,6 +13,7 @@ namespace busfy_api.src.Domain.Entities.Response
         public bool IsCommentingAllowed { get; set; }
         public string Date { get; set; }
         public ProfileBody ProfileCreator { get; set; }
+        public ContentSubscriptionType SubscriptionType { get; set; }
         public bool HasEvaluated { get; set; }
     }
 }
