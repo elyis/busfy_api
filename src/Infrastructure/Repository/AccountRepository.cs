@@ -46,12 +46,11 @@ namespace busfy_api.src.Infrastructure.Repository
                     ValidityPeriodCode = DateTime.UtcNow.AddMinutes(5)
                 };
                 account = (await _context.UnconfirmedAccounts.AddAsync(account)).Entity;
-
-                var resultString = SerializeObject(account);
-                await _distributedCache.SetStringAsync($"{_prefix}{account.Email}", resultString, _options);
             }
 
             await _context.SaveChangesAsync();
+            var resultString = SerializeObject(account);
+            await _distributedCache.SetStringAsync($"{_prefix}{account.Email}", resultString, _options);
             return account;
         }
 

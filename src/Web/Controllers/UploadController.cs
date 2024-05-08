@@ -18,8 +18,7 @@ namespace busfy_api.src.Web.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly IContentCategoryRepository _contentCategoryRepository;
-        private readonly IUserCreationRepository _userCreationRepository;
-        private readonly ISubscriptionToAdditionalContentRepository _subscriptionRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IPostRepository _postRepository;
         private readonly IJwtService _jwtService;
         private readonly IFileUploaderService _fileUploaderService;
@@ -38,15 +37,13 @@ namespace busfy_api.src.Web.Controllers
             IUserRepository userRepository,
             IContentCategoryRepository contentCategoryRepository,
             IPostRepository postRepository,
-            IUserCreationRepository userCreationRepository,
-            ISubscriptionToAdditionalContentRepository subscriptionRepository,
+            ISubscriptionRepository subscriptionRepository,
             IJwtService jwtService,
             IFileUploaderService fileUploaderService,
             ContentInspector contentInspector
         )
         {
             _userRepository = userRepository;
-            _userCreationRepository = userCreationRepository;
             _subscriptionRepository = subscriptionRepository;
             _postRepository = postRepository;
             _jwtService = jwtService;
@@ -128,39 +125,6 @@ namespace busfy_api.src.Web.Controllers
 
         }
 
-        [HttpGet("content/private/{filename}"), Authorize]
-        [SwaggerResponse(200)]
-        [SwaggerResponse(400, Description = "Получаемый контент публичный")]
-        [SwaggerResponse(403, Description = "Нет подписки")]
-        [SwaggerResponse(404)]
-
-        public async Task<IActionResult> GetPrivateFileContent(
-            [Required] string filename,
-            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
-            [FromQuery, Required] Guid contentId
-        )
-        {
-            var tokenInfo = _jwtService.GetTokenPayload(token);
-            var userCreation = await _userCreationRepository.GetAsync(contentId);
-            if (userCreation == null)
-                return NotFound();
-
-            var contentSubscriptionType = Enum.Parse<ContentSubscriptionType>(userCreation.ContentSubscriptionType);
-            if (contentSubscriptionType == ContentSubscriptionType.Public)
-                return BadRequest();
-
-            var userSubscriptions = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenInfo.UserId, int.MaxValue, 0);
-            var subscriptionsToUser = userSubscriptions
-                        .Where(e =>
-                            e.Subscription.Type == userCreation.ContentSubscriptionType &&
-                            e.Subscription.CreatorId == userCreation.UserId);
-
-            if (!subscriptionsToUser.Any())
-                return Forbid();
-
-            return await GetFileAsync(Constants.localPathToPublicContentFiles, filename);
-        }
-
         [HttpGet("profile/{filename}")]
         [SwaggerOperation("Получить иконку профиля")]
         [SwaggerResponse(200, Description = "Успешно", Type = typeof(File))]
@@ -213,83 +177,6 @@ namespace busfy_api.src.Web.Controllers
         public async Task<IActionResult> GetPublicFileContent([Required] string filename)
         {
             return await GetFileAsync(Constants.localPathToPublicContentFiles, filename);
-        }
-
-        [HttpPost("content"), Authorize]
-        [SwaggerOperationFilter(typeof(UploadedFileContentTypesOperationFilter))]
-        [SwaggerResponse(200, Type = typeof(Guid))]
-        [SwaggerResponse(400)]
-        [SwaggerResponse(403)]
-
-        public async Task<IActionResult> UploadContent(
-            [FromForm, Required] IFormFile file,
-            [FromHeader, Required] Guid postId,
-            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("File is empty");
-
-            var tokenInfo = _jwtService.GetTokenPayload(token);
-
-            var userCreation = await _userCreationRepository.GetAsync(postId);
-            if (userCreation?.UserId != tokenInfo.UserId)
-                return Forbid();
-
-            string? fileExtension = null;
-            var fileStream = file.OpenReadStream();
-            var result = _contentInspector.Inspect(fileStream);
-            fileStream.Seek(0, SeekOrigin.Begin);
-
-            try
-            {
-                if (result.Length == 0)
-                    fileExtension = file.FileName.Split(".").Last();
-                else
-                {
-                    var inspectResult = result.MaxBy(e => e.Points);
-                    fileExtension = inspectResult.Definition.File.Extensions.First();
-                }
-            }
-            catch (Exception e)
-            {
-                fileExtension = "txt";
-            }
-
-            if (fileExtension == null)
-                return BadRequest();
-
-            var contentSubscriptionType = Enum.Parse<ContentSubscriptionType>(userCreation.ContentSubscriptionType);
-            string pathToContent = "";
-            switch (contentSubscriptionType)
-            {
-                case ContentSubscriptionType.Public:
-                    pathToContent = Constants.localPathToPublicContentFiles;
-                    break;
-
-                case ContentSubscriptionType.Private:
-                    pathToContent = Constants.localPathToPrivateContentFiles;
-                    break;
-
-                case ContentSubscriptionType.Single:
-                    pathToContent = Constants.localPathToPrivateContentFiles;
-                    break;
-            }
-
-            var filename = await _fileUploaderService.UploadFileAsync(pathToContent, fileStream, fileExtension);
-            if (filename == null)
-                return BadRequest("Failed to upload the file");
-
-            UserCreationType type = GetUserCreationType(fileExtension);
-            UpdateContentBody userCreationBody = new()
-            {
-                Id = userCreation.Id,
-                Filename = filename,
-                Type = type
-            };
-
-            userCreation = await _userCreationRepository.UpdateAsync(userCreationBody, tokenInfo.UserId);
-
-            return Ok(userCreation.Id);
         }
 
         [HttpGet("post/{filename}")]

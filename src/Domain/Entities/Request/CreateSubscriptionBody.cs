@@ -8,8 +8,8 @@ namespace busfy_api.src.Domain.Entities.Request
         [Range(1, float.MaxValue)]
         public float Price { get; set; }
 
-        [EnumDataType(typeof(SubscriptionType))]
-        public SubscriptionType Type { get; set; }
+        [EnumDataType(typeof(ContentSubscriptionType))]
+        public ContentSubscriptionType Type { get; set; }
 
         [Range(1, int.MaxValue)]
         public int CountDays { get; set; }

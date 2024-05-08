@@ -19,7 +19,7 @@ namespace busfy_api.src.Web.Controllers
     {
         private readonly IJwtService _jwtService;
         private readonly IContentCategoryRepository _contentCategoryRepository;
-        private readonly ISubscriptionToAdditionalContentRepository _subscriptionRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly ISelectedUserCategoryRepository _selectedUserCategoryRepository;
         private readonly IUserRepository _userRepository;
         private readonly IPostRepository _postRepository;
@@ -29,7 +29,7 @@ namespace busfy_api.src.Web.Controllers
             IPostRepository postRepository,
             IContentCategoryRepository contentCategoryRepository,
             ISelectedUserCategoryRepository selectedUserCategoryRepository,
-            ISubscriptionToAdditionalContentRepository subscriptionRepository,
+            ISubscriptionRepository subscriptionRepository,
             IUserRepository userRepository
         )
         {
@@ -96,10 +96,24 @@ namespace busfy_api.src.Web.Controllers
         [SwaggerOperation("Получить пост по id")]
         [SwaggerResponse(200)]
         [SwaggerResponse(404)]
-        public async Task<IActionResult> GetPostById(Guid id)
+        public async Task<IActionResult> GetPostById(
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string? token,
+            Guid id)
         {
             var post = await _postRepository.GetAsync(id);
-            return post == null ? NotFound() : Ok(post.ToPostBody());
+            if (post == null)
+                return NotFound();
+
+            var result = post.ToPostBody();
+            if (token != null)
+            {
+                var tokenPayload = _jwtService.GetTokenPayload(token);
+                var like = await _postRepository.GetPostLike(tokenPayload.UserId, result.Id);
+                if (like != null)
+                    result.HasEvaluated = true;
+            }
+
+            return Ok(result);
         }
 
         [HttpPost("post/like"), Authorize]
@@ -142,52 +156,32 @@ namespace busfy_api.src.Web.Controllers
             [FromQuery] bool isDescending = true
         )
         {
-            IEnumerable<Post> posts;
-            int totalPosts = 0;
+            var types = new List<ContentSubscriptionType>() { ContentSubscriptionType.Public };
             Guid? userId = null;
 
-            if (token == null)
+            if (token != null)
             {
-                posts = await _postRepository.GetAll(count, offset, isDescending);
-                totalPosts = await _postRepository.GetCountPosts();
-            }
-            else
-            {
-                var tokenPaylod = _jwtService.GetTokenPayload(token);
-                userId = tokenPaylod.UserId;
-                var categories = await _selectedUserCategoryRepository.GetAllByUserIdAsync((Guid)userId);
+                var tokenPayload = _jwtService.GetTokenPayload(token);
+                userId = tokenPayload.UserId;
+
+                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0))
+                    .Select(e => e.Subscription.Type)
+                    .Distinct()
+                    .Select(Enum.Parse<ContentSubscriptionType>);
+
+                types.AddRange(subscriptionsTypes);
+
+                var categories = await _selectedUserCategoryRepository.GetAllByUserIdAsync(userId.Value);
                 if (categories.Any())
                 {
                     var categoryNames = categories.Select(e => e.CategoryName);
-                    posts = await _postRepository.GetAllByCategories(count, offset, categoryNames, isDescending);
-                    totalPosts = await _postRepository.GetCountPostsByCategories(categoryNames);
-                }
-                else
-                {
-                    posts = await _postRepository.GetAll(count, offset, true);
-                    totalPosts = await _postRepository.GetCountPosts();
+                    var categoryPosts = await _postRepository.GetAllByCategories(types, count, offset, categoryNames, isDescending);
+                    return await CreateResponse(categoryPosts, count, offset, categoryNames, userId);
                 }
             }
 
-            var items = posts.Select(e => e.ToPostBody()).ToList();
-            if (userId != null)
-            {
-                var postIds = items.Select(e => e.Id);
-                var favouritePosts = await _postRepository.GetAllLikes((Guid)userId, postIds);
-                foreach (var favouritePost in favouritePosts)
-                {
-                    var temp = items.First(e => e.Id == favouritePost.PostId);
-                    temp.HasEvaluated = true;
-                }
-            }
-
-            return Ok(new PaginationResponse<PostBody>
-            {
-                Count = count,
-                Offset = offset,
-                Total = totalPosts,
-                Items = items
-            });
+            var posts = await _postRepository.GetAll(types, count, offset, isDescending);
+            return await CreateResponse(posts, count, offset, null, userId);
         }
 
         [HttpGet("tape/category")]
@@ -202,30 +196,27 @@ namespace busfy_api.src.Web.Controllers
             [FromQuery] bool isDescending = true
         )
         {
-            var posts = await _postRepository.GetAllByCategory(name, count, offset, isDescending);
-            var totalPosts = await _postRepository.GetCountPostsByCategories(new string[] { name });
-            var items = posts.Select(e => e.ToPostBody()).ToList();
+            Guid? userId = null;
+            var types = new List<ContentSubscriptionType>() { ContentSubscriptionType.Public };
+            var category = await _contentCategoryRepository.Get(name);
+            if (category == null)
+                return BadRequest();
 
             if (token != null)
             {
                 var tokenPayload = _jwtService.GetTokenPayload(token);
-                var postIds = items.Select(e => e.Id);
-                var favouritePosts = await _postRepository.GetAllLikes(tokenPayload.UserId, postIds);
+                userId = tokenPayload.UserId;
 
-                foreach (var favouritePost in favouritePosts)
-                {
-                    var temp = items.First(e => e.Id == favouritePost.PostId);
-                    temp.HasEvaluated = true;
-                }
+                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0))
+                    .Select(e => e.Subscription.Type)
+                    .Distinct()
+                    .Select(Enum.Parse<ContentSubscriptionType>);
+
+                types.AddRange(subscriptionsTypes);
             }
 
-            return Ok(new PaginationResponse<PostBody>
-            {
-                Count = count,
-                Offset = offset,
-                Total = totalPosts,
-                Items = items
-            });
+            var postsByCategory = await _postRepository.GetAllByCategory(types, category.Name, count, offset, isDescending);
+            return await CreateResponse(postsByCategory, count, offset, new List<string> { category.Name }, userId);
         }
 
         [HttpGet("tape/favourites"), Authorize]
@@ -244,13 +235,10 @@ namespace busfy_api.src.Web.Controllers
             var totalPosts = await _postRepository.GetCountFavouritePosts(tokenPayload.UserId);
 
             var items = posts.Select(e => e.ToPostBody()).ToList();
-            var postIds = items.Select(e => e.Id);
-            var favouritePosts = await _postRepository.GetAllLikes(tokenPayload.UserId, postIds);
 
-            foreach (var favouritePost in favouritePosts)
+            foreach (var item in items)
             {
-                var temp = items.First(e => e.Id == favouritePost.PostId);
-                temp.HasEvaluated = true;
+                item.HasEvaluated = true;
             }
 
             return Ok(new PaginationResponse<PostBody>
@@ -285,12 +273,19 @@ namespace busfy_api.src.Web.Controllers
             [FromQuery] bool isDescending = true
         )
         {
+            var types = new List<ContentSubscriptionType>() { ContentSubscriptionType.Public };
             var tokenPayload = _jwtService.GetTokenPayload(token);
 
-            var subscriptions = await _subscriptionRepository.GetSubscriptionsWithAuthorAsync(tokenPayload.UserId, count, offset);
-            var creatorIds = subscriptions.Select(e => e.AuthorId);
+            var userSubscriptions = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0);
+            var subscriptionsTypes = userSubscriptions
+                .Select(e => e.Subscription.Type)
+                .Distinct()
+                .Select(Enum.Parse<ContentSubscriptionType>);
 
-            var posts = await _postRepository.GetAllByCreators(creatorIds, count, offset, isDescending);
+            types.AddRange(subscriptionsTypes);
+            var creatorIds = userSubscriptions.GroupBy(e => e.Subscription.CreatorId).Select(e => e.Key);
+
+            var posts = await _postRepository.GetAllByCreators(types, creatorIds, count, offset, isDescending);
             var totalPosts = await _postRepository.GetCountPostByCreators(creatorIds);
             var items = posts.Select(e => e.ToPostBody()).ToList();
 
@@ -311,6 +306,60 @@ namespace busfy_api.src.Web.Controllers
                 Items = items
             });
         }
+
+
+        [HttpGet("tape/creator")]
+        [SwaggerResponse(200, Type = typeof(PaginationResponse<PostBody>))]
+
+        public async Task<IActionResult> GetTapeByCreator(
+            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string? token,
+            [FromQuery, Required] Guid userId,
+            [FromQuery, Range(0, int.MaxValue)] int count = 10,
+            [FromQuery, Range(0, int.MaxValue)] int offset = 0,
+            [FromQuery] bool isDescending = true
+        )
+        {
+            var types = new List<ContentSubscriptionType>() { ContentSubscriptionType.Public };
+
+            if (token != null)
+            {
+                var tokenPayload = _jwtService.GetTokenPayload(token);
+                userId = tokenPayload.UserId;
+
+                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0))
+                    .Select(e => e.Subscription.Type)
+                    .Distinct()
+                    .Select(Enum.Parse<ContentSubscriptionType>);
+
+                types.AddRange(subscriptionsTypes);
+            }
+
+            var posts = await _postRepository.GetAllByCreator(types, userId, count, offset, isDescending);
+            var items = posts.Select(e => e.ToPostBody()).ToList();
+            var totalPosts = await _postRepository.GetCountPostsByCreator(userId);
+
+            if (token != null)
+            {
+                var tokenPayload = _jwtService.GetTokenPayload(token);
+                var postIds = items.Select(e => e.Id);
+                var favouritePosts = await _postRepository.GetAllLikes(userId, postIds);
+
+                foreach (var favouritePost in favouritePosts)
+                {
+                    var item = items.First(e => e.Id == favouritePost.PostId);
+                    item.HasEvaluated = true;
+                }
+            }
+
+            return Ok(new PaginationResponse<PostBody>
+            {
+                Count = count,
+                Offset = offset,
+                Total = totalPosts,
+                Items = items
+            });
+        }
+
 
         [HttpGet("comments")]
         [SwaggerOperation("Получить список комментариев к посту")]
@@ -333,5 +382,35 @@ namespace busfy_api.src.Web.Controllers
                 Offset = offset
             });
         }
+        private async Task<IActionResult> CreateResponse(IEnumerable<Post> posts, int count, int offset, IEnumerable<string>? categoryNames, Guid? userId)
+        {
+            var items = posts.Select(e => e.ToPostBody()).ToList();
+            if (userId != null)
+            {
+                var postIds = items.Select(e => e.Id);
+                var favouritePosts = await _postRepository.GetAllLikes(userId.Value, postIds);
+                foreach (var favouritePost in favouritePosts)
+                {
+                    var temp = items.FirstOrDefault(e => e.Id == favouritePost.PostId);
+                    if (temp != null)
+                    {
+                        temp.HasEvaluated = true;
+                    }
+                }
+            }
+
+            var totalPosts = categoryNames != null ?
+                await _postRepository.GetCountPostsByCategories(categoryNames) :
+                await _postRepository.GetCountPosts();
+
+            return Ok(new PaginationResponse<PostBody>
+            {
+                Count = count,
+                Offset = offset,
+                Total = totalPosts,
+                Items = items
+            });
+        }
     }
+
 }

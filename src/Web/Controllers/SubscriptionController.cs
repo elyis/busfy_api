@@ -14,12 +14,12 @@ namespace busfy_api.src.Web.Controllers
     [Route("api")]
     public class SubscriptionController : ControllerBase
     {
-        private readonly ISubscriptionToAdditionalContentRepository _subscriptionRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IUserRepository _userRepository;
         private readonly IJwtService _jwtService;
 
         public SubscriptionController(
-            ISubscriptionToAdditionalContentRepository subscriptionRepository,
+            ISubscriptionRepository subscriptionRepository,
             IUserRepository userRepository,
             IJwtService jwtService
         )
@@ -27,43 +27,6 @@ namespace busfy_api.src.Web.Controllers
             _subscriptionRepository = subscriptionRepository;
             _userRepository = userRepository;
             _jwtService = jwtService;
-        }
-
-        [HttpPost("subscription/user"), Authorize]
-        [SwaggerOperation("Подписаться на аккаунт")]
-        [SwaggerResponse(200, Type = typeof(SubscriptionBody))]
-        [SwaggerResponse(400)]
-
-        public async Task<IActionResult> CreateSubscription(
-            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
-            [FromQuery, Required] Guid authorId
-        )
-        {
-            var tokenInfo = _jwtService.GetTokenPayload(token);
-            var author = await _userRepository.GetAsync(authorId);
-            if (author == null)
-                return BadRequest();
-
-            var user = await _userRepository.GetAsync(tokenInfo.UserId);
-            if (user == null)
-                return BadRequest();
-
-            var result = await _subscriptionRepository.AddSubscriptionAsync(user, author);
-            return result == null ? Conflict() : Ok();
-        }
-
-        [HttpDelete("subscription/user"), Authorize]
-        [SwaggerOperation("Отписаться от аккаунта")]
-        [SwaggerResponse(204)]
-
-        public async Task<IActionResult> RemoveSubscription(
-            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
-            [FromQuery, Required] Guid authorId
-        )
-        {
-            var tokenInfo = _jwtService.GetTokenPayload(token);
-            await _subscriptionRepository.RemoveSubscriptionAsync(tokenInfo.UserId, authorId);
-            return NoContent();
         }
 
         [HttpGet("subscriptions/user"), Authorize]
@@ -76,14 +39,13 @@ namespace busfy_api.src.Web.Controllers
         )
         {
             var tokenInfo = _jwtService.GetTokenPayload(token);
-            var subscriptions = await _subscriptionRepository.GetSubscriptionsWithAuthorAsync(tokenInfo.UserId, count, offset);
-            var totalSubscriptions = await _subscriptionRepository.GetSubscriptionsCount(tokenInfo.UserId);
+            var subscriptions = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenInfo.UserId, count, offset);
 
             var result = new List<ProfileWithFollowersBody>();
             foreach (var subscription in subscriptions)
             {
-                var author = subscription.Author;
-                var subscriberCount = await _subscriptionRepository.GetCountSubscriptionsByAuthor(author.Id);
+                var author = subscription.User;
+                var subscriberCount = await _subscriptionRepository.GetCountSubscribersByCreator(author.Id);
                 result.Add(new ProfileWithFollowersBody
                 {
                     Profile = author.ToProfileBody(),
@@ -95,7 +57,7 @@ namespace busfy_api.src.Web.Controllers
             {
                 Count = count,
                 Offset = offset,
-                Total = totalSubscriptions,
+                Total = subscriptions.Count(),
                 Items = result
             });
         }
@@ -114,7 +76,7 @@ namespace busfy_api.src.Web.Controllers
             var tokenInfo = _jwtService.GetTokenPayload(token);
             var user = await _userRepository.GetAsync(tokenInfo.UserId);
 
-            var subscription = await _subscriptionRepository.AddAsync(subscriptionBody, user);
+            var subscription = await _subscriptionRepository.CreateSubscription(subscriptionBody, user);
             return subscription == null ? BadRequest() : Ok(subscription.ToSubscriptionBody());
         }
 
@@ -181,7 +143,7 @@ namespace busfy_api.src.Web.Controllers
             if (user == null)
                 return BadRequest();
 
-            var userSubscription = await _subscriptionRepository.CreateSubscriptionToUser(subscriptionId, user);
+            var userSubscription = await _subscriptionRepository.CreateUserSubscription(subscriptionId, user);
             return userSubscription == null ? BadRequest() : Ok(userSubscription.ToUserSubscriptionBody());
         }
     }

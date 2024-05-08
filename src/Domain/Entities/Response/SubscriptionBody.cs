@@ -6,7 +6,7 @@ namespace busfy_api.src.Domain.Entities.Response
     {
         public Guid Id { get; set; }
         public float Price { get; set; }
-        public SubscriptionType Type { get; set; }
+        public ContentSubscriptionType Type { get; set; }
         public int CountDays { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace busfy_api.src.Infrastructure.Repository
 {
-    public class SubscriptionToAdditionalContentRepository : ISubscriptionToAdditionalContentRepository
+    public class SubscriptionToAdditionalContentRepository : ISubscriptionRepository
     {
         private readonly AppDbContext _context;
         private readonly IDistributedCache _distributedCache;
@@ -29,9 +29,9 @@ namespace busfy_api.src.Infrastructure.Repository
             _distributedCache = distributedCache;
         }
 
-        public async Task<SubscriptionToAdditionalContent?> AddAsync(CreateSubscriptionBody body, UserModel creator)
+        public async Task<Subscription?> CreateSubscription(CreateSubscriptionBody body, UserModel creator)
         {
-            var subscription = new SubscriptionToAdditionalContent
+            var subscription = new Subscription
             {
                 CountDays = body.CountDays,
                 Creator = creator,
@@ -39,16 +39,16 @@ namespace busfy_api.src.Infrastructure.Repository
                 Type = body.Type.ToString(),
             };
 
-            subscription = (await _context.SubscriptionsToAdditionalContent.AddAsync(subscription)).Entity;
+            subscription = (await _context.Subscriptions.AddAsync(subscription)).Entity;
             await _context.SaveChangesAsync();
             await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
 
             return subscription;
         }
 
-        public async Task<UserSubscription?> CreateSubscriptionToUser(Guid id, UserModel user)
+        public async Task<UserSubscription?> CreateUserSubscription(Guid id, UserModel user)
         {
-            var subscription = await GetSubscriptionToAdditionalContentAsync(id);
+            var subscription = await GetSubscriptionAsync(id);
             if (subscription == null)
                 return null;
 
@@ -72,9 +72,9 @@ namespace busfy_api.src.Infrastructure.Repository
             return userSubscription;
         }
 
-        public async Task<UserSubscription?> GetUserSubscriptionAsync(Guid id, Guid userId)
+        public async Task<UserSubscription?> GetUserSubscriptionAsync(Guid subscriptionId, Guid userId)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefixUserSubscription}{id}");
+            var cachedString = await _distributedCache.GetStringAsync($"{_prefixUserSubscription}{subscriptionId}");
             UserSubscription? subscription = null;
             if (cachedString != null)
             {
@@ -88,36 +88,43 @@ namespace busfy_api.src.Infrastructure.Repository
 
             subscription = await _context.UserSubscriptions
                 .FirstOrDefaultAsync(e =>
-                    e.SubscriptionId == id && e.UserId == userId);
+                    e.SubscriptionId == subscriptionId && e.UserId == userId);
             if (subscription != null)
-                await _distributedCache.SetStringAsync($"{_prefixUserSubscription}{id}:{userId}", SerializeObject(subscription), _options);
+                await _distributedCache.SetStringAsync($"{_prefixUserSubscription}{subscriptionId}:{userId}", SerializeObject(subscription), _options);
 
             return subscription;
         }
 
+        public async Task<int> GetCountSubscriptions(Guid userId)
+        {
+            return await _context.UserSubscriptions
+                .Where(e => e.UserId == userId)
+                .CountAsync();
+        }
+
         public async Task<bool> DeleteAsync(Guid id, Guid userId)
         {
-            var subscription = await GetSubscriptionToAdditionalContentAsync(id);
+            var subscription = await GetSubscriptionAsync(id);
             if (subscription == null)
                 return true;
 
             if (subscription.CreatorId != userId)
                 return false;
 
-            _context.SubscriptionsToAdditionalContent.Remove(subscription);
+            _context.Subscriptions.Remove(subscription);
             await _context.SaveChangesAsync();
             await _distributedCache.RemoveAsync($"{_prefixAdditional}{subscription.Id}");
 
             return true;
         }
 
-        public async Task<SubscriptionToAdditionalContent?> GetSubscriptionToAdditionalContentAsync(Guid id)
+        public async Task<Subscription?> GetSubscriptionAsync(Guid id)
         {
             var cachedString = await _distributedCache.GetStringAsync($"{_prefixAdditional}{id}");
-            SubscriptionToAdditionalContent? subscription = null;
+            Subscription? subscription = null;
             if (cachedString != null)
             {
-                subscription = DeserializeObject<SubscriptionToAdditionalContent>(cachedString);
+                subscription = DeserializeObject<Subscription>(cachedString);
                 if (subscription != null)
                 {
                     _context.Attach(subscription);
@@ -125,7 +132,7 @@ namespace busfy_api.src.Infrastructure.Repository
                 }
             }
 
-            subscription = await _context.SubscriptionsToAdditionalContent
+            subscription = await _context.Subscriptions
                 .FirstOrDefaultAsync(e => e.Id == id);
             if (subscription != null)
                 await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
@@ -133,9 +140,9 @@ namespace busfy_api.src.Infrastructure.Repository
             return subscription;
         }
 
-        public async Task<IEnumerable<SubscriptionToAdditionalContent>> GetSubscriptionsCreatedByUser(Guid userId, int count, int offset)
+        public async Task<IEnumerable<Subscription>> GetSubscriptionsCreatedByUser(Guid userId, int count, int offset)
         {
-            return await _context.SubscriptionsToAdditionalContent
+            return await _context.Subscriptions
                 .Where(e => e.CreatorId == userId)
                 .Skip(offset)
                 .Take(count)
@@ -152,80 +159,6 @@ namespace busfy_api.src.Infrastructure.Repository
                 .ToListAsync();
         }
 
-        public async Task<Subscription?> GetSubscriptionAsync(Guid subId, Guid authorid)
-        {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{subId}:{authorid}");
-            Subscription? subscription = null;
-            if (cachedString != null)
-            {
-                subscription = DeserializeObject<Subscription>(cachedString);
-                if (subscription != null)
-                {
-                    _context.Attach(subscription);
-                    return subscription;
-                }
-            }
-
-            subscription = await _context.Subscriptions
-                .FirstOrDefaultAsync(e => e.SubId == subId && e.AuthorId == authorid);
-            if (subscription != null)
-                await _distributedCache.SetStringAsync($"{_prefix}{subId}:{authorid}", SerializeObject(subscription), _options);
-
-            return subscription;
-        }
-
-        public async Task<Subscription?> AddSubscriptionAsync(UserModel sub, UserModel author)
-        {
-            var subscription = await GetSubscriptionAsync(sub.Id, author.Id);
-            if (subscription == null)
-                return null;
-
-            subscription = new Subscription
-            {
-                Author = author,
-                Subscriber = sub
-            };
-
-            subscription = (await _context.Subscriptions.AddAsync(subscription))?.Entity;
-            await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefix}{sub.Id}:{author.Id}", SerializeObject(subscription), _options);
-            return subscription;
-        }
-
-        public async Task<IEnumerable<Subscription>> GetSubscriptionsWithAuthorAsync(Guid subId, int count, int offset)
-        {
-            return await _context.Subscriptions
-                .Where(e => e.SubId == subId)
-                .Skip(offset)
-                .Take(count)
-                .ToListAsync();
-        }
-
-        public async Task<int> GetCountSubscriptionsByAuthor(Guid id)
-        {
-            return await _context.Subscriptions
-                .Where(e => e.AuthorId == id)
-                .CountAsync();
-        }
-        public async Task<int> GetSubscriptionsCount(Guid subId)
-        {
-            return await _context.Subscriptions
-                .Where(e => e.SubId == subId)
-                .CountAsync();
-        }
-
-        public async Task<bool> RemoveSubscriptionAsync(Guid subId, Guid authorId)
-        {
-            var subscription = await GetSubscriptionAsync(subId, authorId);
-            if (subscription == null)
-                return true;
-
-            _context.Subscriptions.Remove(subscription);
-            await _context.SaveChangesAsync();
-            await _distributedCache.RemoveAsync($"{_prefix}{subId}:{authorId}");
-
-            return true;
-        }
 
         private static string SerializeObject(object obj)
         {
@@ -235,6 +168,21 @@ namespace busfy_api.src.Infrastructure.Repository
         private static T? DeserializeObject<T>(string json)
         {
             return JsonConvert.DeserializeObject<T>(json);
+        }
+
+        public async Task<int> GetCountSubscribersByCreator(Guid id)
+        {
+            var subscriptions = await _context.Subscriptions
+                .Where(e => e.CreatorId == id)
+                .ToListAsync();
+
+            if (!subscriptions.Any())
+                return 0;
+
+            var ids = subscriptions.Select(e => e.Id);
+            return await _context.UserSubscriptions
+                .Where(e => ids.Contains(e.SubscriptionId))
+                .CountAsync();
         }
     }
 }

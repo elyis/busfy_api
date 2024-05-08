@@ -47,7 +47,8 @@ namespace busfy_api.src.Infrastructure.Repository
                 Type = isTextPost ? UserCreationType.Text.ToString() : null,
                 IsFormed = isTextPost,
                 Creator = creator,
-                IsCommentingAllowed = body.IsCommentingAllowed
+                IsCommentingAllowed = body.IsCommentingAllowed,
+                ContentSubscriptionType = body.SubscriptionType.ToString(),
             };
 
             post = (await _context.Posts.AddAsync(post)).Entity;
@@ -108,7 +109,7 @@ namespace busfy_api.src.Infrastructure.Repository
             return postLike;
         }
 
-        public async Task<IEnumerable<Post>> GetAll(int count, int offset, bool isDescending)
+        public async Task<IEnumerable<Post>> GetAll(IEnumerable<ContentSubscriptionType> subscriptionTypes, int count, int offset, bool isDescending)
         {
             // var cachedKey = $"{_prefixForMany}:{count}:{offset}:{isDescending}";
             // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
@@ -116,9 +117,10 @@ namespace busfy_api.src.Infrastructure.Repository
             // if (!string.IsNullOrEmpty(cachedData))
             //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
 
+            var types = subscriptionTypes.Distinct().Select(e => e.ToString());
             var query = _context.Posts
                .Include(e => e.Creator)
-               .Where(e => e.IsFormed);
+               .Where(e => e.IsFormed && types.Contains(e.ContentSubscriptionType));
 
             if (isDescending)
                 query = query.OrderByDescending(e => e.CreatedAt);
@@ -135,17 +137,18 @@ namespace busfy_api.src.Infrastructure.Repository
             return posts;
         }
 
-        public async Task<IEnumerable<Post>> GetAllByCategories(int count, int offset, IEnumerable<string> categoryNames, bool isDescending)
+        public async Task<IEnumerable<Post>> GetAllByCategories(IEnumerable<ContentSubscriptionType> subscriptionTypes, int count, int offset, IEnumerable<string> categoryNames, bool isDescending)
         {
             // var cachedKey = $"{_prefixForMany}{string.Join("_", categoryNames)}:{count}:{offset}:{isDescending}";
             // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
 
             // if (!string.IsNullOrEmpty(cachedData))
             //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
+            var types = subscriptionTypes.Distinct().Select(e => e.ToString());
 
             var query = _context.Posts
                 .Include(e => e.Creator)
-                .Where(e => e.IsFormed && categoryNames.Contains(e.CategoryName));
+                .Where(e => e.IsFormed && categoryNames.Contains(e.CategoryName) && types.Contains(e.ContentSubscriptionType));
 
             if (isDescending)
                 query = query.OrderByDescending(e => e.CreatedAt);
@@ -162,7 +165,7 @@ namespace busfy_api.src.Infrastructure.Repository
             return posts;
         }
 
-        public async Task<IEnumerable<Post>> GetAllByCategory(string categoryName, int count, int offset, bool isDescending)
+        public async Task<IEnumerable<Post>> GetAllByCategory(IEnumerable<ContentSubscriptionType> subscriptionTypes, string categoryName, int count, int offset, bool isDescending)
         {
             // var cachedKey = $"{_prefixForMany}{categoryName}:{count}:{offset}:{isDescending}";
             // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
@@ -170,9 +173,11 @@ namespace busfy_api.src.Infrastructure.Repository
             // if (!string.IsNullOrEmpty(cachedData))
             //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
 
+            var types = subscriptionTypes.Distinct().Select(e => e.ToString());
+
             var query = _context.Posts
                 .Include(e => e.Creator)
-                .Where(e => e.CategoryName == categoryName && e.IsFormed);
+                .Where(e => e.CategoryName == categoryName && e.IsFormed && types.Contains(e.ContentSubscriptionType));
 
             if (isDescending)
                 query = query.OrderByDescending(e => e.CreatedAt);
@@ -189,17 +194,18 @@ namespace busfy_api.src.Infrastructure.Repository
             return posts;
         }
 
-        public async Task<IEnumerable<Post>> GetAllByCreators(IEnumerable<Guid> creatorIds, int count, int offset, bool isDescending)
+        public async Task<IEnumerable<Post>> GetAllByCreators(IEnumerable<ContentSubscriptionType> subscriptionTypes, IEnumerable<Guid> creatorIds, int count, int offset, bool isDescending)
         {
             // var cachedKey = $"{_prefixForMany}creators:{string.Join("_", creatorIds)}:{count}:{offset}:{isDescending}";
             // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
 
             // if (!string.IsNullOrEmpty(cachedData))
             //     return JsonConvert.DeserializeObject<IEnumerable<Post>>(cachedData);
+            var types = subscriptionTypes.Distinct().Select(e => e.ToString());
 
             var query = _context.Posts
                 .Include(e => e.Creator)
-                .Where(e => creatorIds.Contains(e.CreatorId) && e.IsFormed);
+                .Where(e => creatorIds.Contains(e.CreatorId) && e.IsFormed && types.Contains(e.ContentSubscriptionType));
 
             if (isDescending)
                 query = query.OrderByDescending(e => e.CreatedAt);
@@ -390,6 +396,32 @@ namespace busfy_api.src.Infrastructure.Repository
             _context.PostLikes.Remove(like);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<IEnumerable<Post>> GetAllByCreator(IEnumerable<ContentSubscriptionType> subscriptionTypes, Guid creatorId, int count, int offset, bool isDescending)
+        {
+            var types = subscriptionTypes.Distinct().Select(e => e.ToString());
+
+            var query = _context.Posts
+               .Include(e => e.Creator)
+               .Where(e => e.IsFormed && e.CreatorId == creatorId && types.Contains(e.ContentSubscriptionType));
+
+            if (isDescending)
+                query = query.OrderByDescending(e => e.CreatedAt);
+            else
+                query = query.OrderBy(e => e.CreatedAt);
+
+            return await query
+                .Skip(offset)
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetCountPostsByCreator(Guid creatorId)
+        {
+            return await _context.Posts
+                .Where(e => e.IsFormed && e.CreatorId == creatorId)
+                .CountAsync();
         }
     }
 

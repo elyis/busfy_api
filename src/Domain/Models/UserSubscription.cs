@@ -7,7 +7,7 @@ namespace busfy_api.src.Domain.Models
     [PrimaryKey(nameof(SubscriptionId), nameof(UserId))]
     public class UserSubscription
     {
-        public SubscriptionToAdditionalContent Subscription { get; set; }
+        public Subscription Subscription { get; set; }
         public Guid SubscriptionId { get; set; }
 
         public UserModel User { get; set; }
@@ -18,7 +18,7 @@ namespace busfy_api.src.Domain.Models
         {
             return new UserSubscriptionBody
             {
-                Type = Enum.Parse<SubscriptionType>(Subscription.Type),
+                Type = Enum.Parse<ContentSubscriptionType>(Subscription.Type),
                 EndDate = EndDate
             };
         }

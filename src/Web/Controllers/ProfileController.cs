@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http.Headers;
 using busfy_api.src.Domain.Entities.Request;
@@ -17,22 +16,19 @@ namespace busfy_api.src.Web.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly IPostRepository _postRepository;
-        private readonly IUserCreationRepository _userCreationRepository;
-        private readonly ISubscriptionToAdditionalContentRepository _subscriptionToAdditionalContentRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IJwtService _jwtService;
 
         public ProfileController(
             IUserRepository userRepository,
-            IUserCreationRepository userCreationRepository,
             IPostRepository postRepository,
-            ISubscriptionToAdditionalContentRepository subscriptionToAdditionalContentRepository,
+            ISubscriptionRepository subscriptionRepository,
             IJwtService jwtService
         )
         {
             _userRepository = userRepository;
             _postRepository = postRepository;
-            _userCreationRepository = userCreationRepository;
-            _subscriptionToAdditionalContentRepository = subscriptionToAdditionalContentRepository;
+            _subscriptionRepository = subscriptionRepository;
             _jwtService = jwtService;
         }
 
@@ -51,16 +47,13 @@ namespace busfy_api.src.Web.Controllers
             if (user == null)
                 return NotFound();
 
-            var countLikesByPosts = await _postRepository.GetCountLikesByAuthor(user.Id);
-            var countLikesByUserCreations = await _userCreationRepository.GetCountLikesByAuthor(user.Id);
-            var subscriberCount = await _subscriptionToAdditionalContentRepository.GetCountSubscriptionsByAuthor(user.Id);
-
-
+            var countLikes = await _postRepository.GetCountLikesByAuthor(user.Id);
+            var subscriberCount = await _subscriptionRepository.GetCountSubscribersByCreator(user.Id);
 
             return Ok(new ProfileWithFollowersAndLikesBody
             {
                 Profile = user.ToProfileBody(),
-                CountLikes = countLikesByUserCreations + countLikesByPosts,
+                CountLikes = countLikes,
                 SubscriberCount = subscriberCount
             });
         }
@@ -74,7 +67,7 @@ namespace busfy_api.src.Web.Controllers
             Guid userId
         )
         {
-            var subscriberCount = await _subscriptionToAdditionalContentRepository.GetCountSubscriptionsByAuthor(userId);
+            var subscriberCount = await _subscriptionRepository.GetCountSubscribersByCreator(userId);
 
             return Ok(new
             {
@@ -94,14 +87,13 @@ namespace busfy_api.src.Web.Controllers
             if (user == null)
                 return NotFound();
 
-            var countLikesByPosts = await _postRepository.GetCountLikesByAuthor(user.Id);
-            var countLikesByUserCreations = await _userCreationRepository.GetCountLikesByAuthor(user.Id);
-            var subscriberCount = await _subscriptionToAdditionalContentRepository.GetCountSubscriptionsByAuthor(user.Id);
+            var countLikes = await _postRepository.GetCountLikesByAuthor(user.Id);
+            var subscriberCount = await _subscriptionRepository.GetCountSubscribersByCreator(user.Id);
 
             return Ok(new ProfileWithFollowersAndLikesBody
             {
                 Profile = user.ToProfileBody(),
-                CountLikes = countLikesByUserCreations + countLikesByPosts,
+                CountLikes = countLikes,
                 SubscriberCount = subscriberCount
             });
         }
