@@ -7,6 +7,7 @@ namespace busfy_api.src.Domain.IRepository
     {
         Task<Subscription?> GetSubscriptionAsync(Guid id);
         Task<int> GetCountSubscribersByCreator(Guid id);
+        Task<bool> RemoveUserCreation(Guid subscriptionId, Guid userId);
         Task<int> GetCountSubscriptions(Guid userId);
         Task<IEnumerable<Subscription>> GetSubscriptionsCreatedByUser(Guid userId, int count, int offset);
         Task<IEnumerable<UserSubscription>> GetSubscriptionsByUserAndSubscription(Guid userId, int count, int offset);

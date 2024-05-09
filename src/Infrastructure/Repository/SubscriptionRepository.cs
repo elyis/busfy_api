@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace busfy_api.src.Infrastructure.Repository
 {
-    public class SubscriptionToAdditionalContentRepository : ISubscriptionRepository
+    public class SubscriptionRepository : ISubscriptionRepository
     {
         private readonly AppDbContext _context;
         private readonly IDistributedCache _distributedCache;
@@ -21,7 +21,7 @@ namespace busfy_api.src.Infrastructure.Repository
             AbsoluteExpiration = DateTime.UtcNow.AddMinutes(6)
         };
 
-        public SubscriptionToAdditionalContentRepository(
+        public SubscriptionRepository(
             AppDbContext context,
             IDistributedCache distributedCache)
         {
@@ -138,6 +138,17 @@ namespace busfy_api.src.Infrastructure.Repository
                 await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
 
             return subscription;
+        }
+
+        public async Task<bool> RemoveUserCreation(Guid subscriptionId, Guid userId)
+        {
+            var userSubscription = await GetUserSubscriptionAsync(subscriptionId, userId);
+            if (userSubscription == null)
+                return true;
+
+            _context.UserSubscriptions.Remove(userSubscription);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<IEnumerable<Subscription>> GetSubscriptionsCreatedByUser(Guid userId, int count, int offset)

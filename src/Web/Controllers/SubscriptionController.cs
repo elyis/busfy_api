@@ -63,7 +63,7 @@ namespace busfy_api.src.Web.Controllers
         }
 
 
-        [HttpPost("subscription/additional-content"), Authorize]
+        [HttpPost("subscription"), Authorize]
         [SwaggerOperation("Создать подписку на свой аккаунт")]
         [SwaggerResponse(200, Type = typeof(SubscriptionBody))]
         [SwaggerResponse(400)]
@@ -80,14 +80,14 @@ namespace busfy_api.src.Web.Controllers
             return subscription == null ? BadRequest() : Ok(subscription.ToSubscriptionBody());
         }
 
-        [HttpGet("subscriptions-created/additional-content"), Authorize]
+        [HttpGet("subscriptions-created"), Authorize]
         [SwaggerOperation("Получить все созданные подписки")]
         [SwaggerResponse(200, Type = typeof(IEnumerable<SubscriptionBody>))]
 
         public async Task<IActionResult> GetSubsciptions(
             [FromQuery, Required] Guid userId,
-            [FromQuery] int count = 1,
-            [FromQuery] int offset = 0
+            [FromQuery, Range(0, int.MaxValue)] int count = 10,
+            [FromQuery, Range(0, int.MaxValue)] int offset = 0
         )
         {
             var subscriptions = await _subscriptionRepository.GetSubscriptionsCreatedByUser(userId, count, offset);
@@ -95,7 +95,7 @@ namespace busfy_api.src.Web.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("subscription/additional-content"), Authorize]
+        [HttpDelete("subscription"), Authorize]
         [SwaggerOperation("Удалить созданную подписку")]
         [SwaggerResponse(204)]
         [SwaggerResponse(403)]
@@ -112,7 +112,7 @@ namespace busfy_api.src.Web.Controllers
         }
 
 
-        [HttpGet("subscriptions/additional-content"), Authorize]
+        [HttpGet("subscriptions"), Authorize]
         [SwaggerOperation("Получить подписки пользователя на других")]
         [SwaggerResponse(200, Type = typeof(IEnumerable<UserSubscriptionBody>))]
 
@@ -129,7 +129,25 @@ namespace busfy_api.src.Web.Controllers
             return Ok(result);
         }
 
-        [HttpPost("subscribe/additional-content"), Authorize]
+        [HttpDelete("unsubscribe"), Authorize]
+        [SwaggerOperation("Отписаться")]
+        [SwaggerResponse(204)]
+
+        public async Task<IActionResult> Unsubscribe(
+            [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
+            [FromQuery, Required] Guid subscriptionId
+        )
+        {
+            var tokenInfo = _jwtService.GetTokenPayload(token);
+            var user = await _userRepository.GetAsync(tokenInfo.UserId);
+            if (user == null)
+                return BadRequest();
+
+            await _subscriptionRepository.RemoveUserCreation(subscriptionId, user.Id);
+            return NoContent();
+        }
+
+        [HttpPost("subscribe"), Authorize]
         [SwaggerOperation("Оформить подписку")]
         [SwaggerResponse(200, Type = typeof(UserSubscriptionBody))]
 
