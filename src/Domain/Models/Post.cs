@@ -33,23 +33,6 @@ namespace busfy_api.src.Domain.Models
             if (!IsFormed)
                 throw new NullReferenceException();
 
-            return new PostBody
-            {
-                Id = Id,
-                Description = Description,
-                Text = Text,
-                Type = Enum.Parse<UserCreationType>(Type),
-                CategoryName = CategoryName,
-                Date = CreatedAt.ToString("s"),
-                ProfileCreator = Creator.ToProfileBody(),
-                UrlFile = Type == UserCreationType.Text.ToString() ? null : $"{Constants.webPathToPostFiles}{Filename}",
-                SubscriptionType = Enum.Parse<ContentSubscriptionType>(ContentSubscriptionType),
-                IsCommentingAllowed = IsCommentingAllowed
-            };
-        }
-
-        public UserCreationBody ToUserCreationBody()
-        {
             string? url = Filename;
             var contentSubscriptionType = (ContentSubscriptionType)Enum.Parse(typeof(ContentSubscriptionType), ContentSubscriptionType);
             if (url != null)
@@ -66,17 +49,18 @@ namespace busfy_api.src.Domain.Models
                 }
             }
 
-            return new UserCreationBody
+            return new PostBody
             {
                 Id = Id,
                 Description = Description,
-                UrlFile = url,
-                Type = Type == null ? null : (UserCreationType)Enum.Parse(typeof(UserCreationType), Type),
-                ContentSubscriptionType = contentSubscriptionType,
-                Date = CreatedAt.ToString("s"),
-                CategoryName = CategoryName,
-                ProfileCreator = Creator.ToProfileBody(),
                 Text = Text,
+                Type = Enum.Parse<UserCreationType>(Type),
+                CategoryName = CategoryName,
+                Date = CreatedAt.ToString("s"),
+                ProfileCreator = Creator.ToProfileBody(),
+                UrlFile = url,
+                SubscriptionType = Enum.Parse<ContentSubscriptionType>(ContentSubscriptionType),
+                IsCommentingAllowed = IsCommentingAllowed
             };
         }
     }

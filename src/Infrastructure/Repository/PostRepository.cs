@@ -63,6 +63,12 @@ namespace busfy_api.src.Infrastructure.Repository
             return post;
         }
 
+        public async Task<Post?> GetByFilename(string filename)
+        {
+            return await _context.Posts
+                .FirstOrDefaultAsync(e => e.Filename == filename);
+        }
+
         public async Task<int> GetCountLikesByAuthor(Guid userId)
         {
             // var cachedKey = $"{_prefix}likes:user:{userId}";

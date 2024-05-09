@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
-using busfy_api.src.Domain.Entities.Request;
+using System.Net.Http.Headers;
 using busfy_api.src.Domain.Enums;
 using busfy_api.src.Domain.IRepository;
 using busfy_api.src.Shared.Filters;
@@ -179,12 +179,34 @@ namespace busfy_api.src.Web.Controllers
             return await GetFileAsync(Constants.localPathToPublicContentFiles, filename);
         }
 
-        [HttpGet("post/{filename}")]
+        [HttpGet("content/private/{filename}")]
         [SwaggerResponse(200)]
+        [SwaggerResponse(400)]
+        [SwaggerResponse(403)]
 
-        public async Task<IActionResult> GetPost([Required] string filename)
+        public async Task<IActionResult> GetPrivateFileContent(
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token,
+            [Required] string filename)
         {
-            return await GetFileAsync(Constants.localPathToPostFiles, filename);
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+            var post = await _postRepository.GetByFilename(filename);
+            if (post == null || post.SubscriptionId == null)
+                return BadRequest();
+
+            var subscription = await _subscriptionRepository.GetUserSubscriptionAsync((Guid)post.SubscriptionId, tokenPayload.UserId);
+            if (subscription != null)
+                return await GetFileAsync(Constants.localPathToPrivateContentFiles, filename);
+
+            var paidSubscriptionType = ContentSubscriptionType.Private.ToString();
+            if (post.ContentSubscriptionType == paidSubscriptionType)
+            {
+                var subscriptions = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MaxValue, 0)).Select(e => e.Subscription);
+                var paidSubscription = subscriptions.Where(e => e.Type == paidSubscriptionType).FirstOrDefault();
+                if (paidSubscription == null)
+                    return Forbid();
+            }
+
+            return await GetFileAsync(Constants.localPathToPrivateContentFiles, filename);
         }
 
         [HttpPost("post"), Authorize]
@@ -232,7 +254,14 @@ namespace busfy_api.src.Web.Controllers
             if (fileExtension == null)
                 return BadRequest();
 
-            var filename = await _fileUploaderService.UploadFileAsync(Constants.localPathToPostFiles, fileStream, fileExtension);
+            string pathToStorage = string.Empty;
+            if (post.ContentSubscriptionType == ContentSubscriptionType.Public.ToString())
+                pathToStorage = Constants.localPathToPublicContentFiles;
+            else
+                pathToStorage = Constants.localPathToPrivateContentFiles;
+
+
+            var filename = await _fileUploaderService.UploadFileAsync(pathToStorage, fileStream, fileExtension);
             if (filename == null)
                 return BadRequest("Failed to upload the file");
 

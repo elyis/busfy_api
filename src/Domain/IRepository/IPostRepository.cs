@@ -8,6 +8,7 @@ namespace busfy_api.src.Domain.IRepository
     {
         Task<Post> AddAsync(CreatePostBody body, UserModel creator, ContentCategory category, Subscription? subscription);
         Task<Post?> UpdateFileAsync(Guid id, string filename, UserCreationType type);
+        Task<Post?> GetByFilename(string filename);
         Task<Post?> UpdateSubscriptionType(Guid postId, Subscription subscription);
         Task<int> GetCountPosts();
         Task<int> GetCountLikes(Guid id);

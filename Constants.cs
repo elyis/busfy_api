@@ -17,7 +17,5 @@ namespace busfy_api
         public static readonly string webPathToPublicContentFile = $"{serverUrl}/api/upload/content/pub/";
         public static readonly string webPathToPrivateContentFile = $"{serverUrl}/api/upload/content/private/";
         public static readonly string webPathToContentCategories = $"{serverUrl}/api/upload/content-category/";
-        public static readonly string webPathToPostFiles = $"{serverUrl}/api/upload/post/";
-
     }
 }
