@@ -1,6 +1,7 @@
 using busfy_api.src.App.IService;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Shared;
+using busfy_api.src.Domain.Enums;
 using busfy_api.src.Domain.IRepository;
 using Microsoft.AspNetCore.Mvc;
 using webApiTemplate.src.App.IService;
@@ -15,19 +16,22 @@ namespace busfy_api.src.App.Service
         private readonly IAccountRepository _accountRepository;
         private readonly IJwtService _jwtService;
         private readonly ILocationService _locationService;
+        private readonly ISubscriptionRepository _subscriptionRepository;
 
         public AuthService
         (
             IUserRepository userRepository,
             IAccountRepository accountRepository,
             IJwtService jwtService,
-            ILocationService locationService
+            ILocationService locationService,
+            ISubscriptionRepository subscriptionRepository
         )
         {
             _userRepository = userRepository;
             _accountRepository = accountRepository;
             _jwtService = jwtService;
             _locationService = locationService;
+            _subscriptionRepository = subscriptionRepository;
         }
 
         public async Task<IActionResult> RestoreToken(string refreshToken)
@@ -113,6 +117,15 @@ namespace busfy_api.src.App.Service
                 Profile = user.ToProfileBody(),
                 TokenPair = tokenPair
             };
+
+            var subscription = new CreateSubscriptionBody
+            {
+                Type = ContentSubscriptionType.Public,
+                Price = 0,
+                CountDays = int.MaxValue
+            };
+
+            await _subscriptionRepository.CreateSubscription(subscription, user);
             return new OkObjectResult(result);
         }
 

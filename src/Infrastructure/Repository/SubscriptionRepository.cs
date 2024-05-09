@@ -39,7 +39,15 @@ namespace busfy_api.src.Infrastructure.Repository
                 Type = body.Type.ToString(),
             };
 
+            var userSubscription = new UserSubscription
+            {
+                Subscription = subscription,
+                User = creator,
+                EndDate = DateTime.UtcNow.AddYears(10),
+            };
+
             subscription = (await _context.Subscriptions.AddAsync(subscription)).Entity;
+            await _context.UserSubscriptions.AddAsync(userSubscription);
             await _context.SaveChangesAsync();
             await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
 
