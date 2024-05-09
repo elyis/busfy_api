@@ -60,7 +60,11 @@ namespace busfy_api.src.Web.Controllers
             if (creator == null)
                 return BadRequest();
 
-            var result = await _postRepository.AddAsync(body, creator, contentCategory);
+            Subscription? subscription = null;
+            if (body.SubscriptionId != null)
+                subscription = await _subscriptionRepository.GetSubscriptionAsync((Guid)body.SubscriptionId);
+
+            var result = await _postRepository.AddAsync(body, creator, contentCategory, subscription);
             return Ok(new
             {
                 result.Id
@@ -164,12 +168,18 @@ namespace busfy_api.src.Web.Controllers
                 var tokenPayload = _jwtService.GetTokenPayload(token);
                 userId = tokenPayload.UserId;
 
-                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0))
+                var userSubscription = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0);
+
+                var subscriptionsTypes = userSubscription
                     .Select(e => e.Subscription.Type)
                     .Distinct()
                     .Select(Enum.Parse<ContentSubscriptionType>);
-
                 types.AddRange(subscriptionsTypes);
+
+                var uniqueContent = userSubscription
+                    .Where(e => e.Subscription.Type == ContentSubscriptionType.Single.ToString())
+                    .Select(e => e.Subscription.UniqueContent.Id);
+
 
                 var categories = await _selectedUserCategoryRepository.GetAllByUserIdAsync(userId.Value);
                 if (categories.Any())
@@ -307,6 +317,29 @@ namespace busfy_api.src.Web.Controllers
             });
         }
 
+        [HttpPatch("post"), Authorize]
+        [SwaggerOperation("Обновить подписку поста на single")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(400)]
+        [SwaggerResponse(403)]
+
+        public async Task<IActionResult> UpdateSubscriptionType(
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token,
+            UpdatePostSubscriptionBody body
+        )
+        {
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+
+            var subscription = await _subscriptionRepository.GetSubscriptionAsync(body.SubscriptionId);
+            if (subscription == null)
+                return BadRequest();
+
+            if (subscription.CreatorId != tokenPayload.UserId)
+                return Forbid();
+
+            var result = await _postRepository.UpdateSubscriptionType(body.PostId, subscription);
+            return result == null ? BadRequest() : Ok();
+        }
 
         [HttpGet("tape/creator")]
         [SwaggerResponse(200, Type = typeof(PaginationResponse<PostBody>))]
@@ -412,5 +445,4 @@ namespace busfy_api.src.Web.Controllers
             });
         }
     }
-
 }

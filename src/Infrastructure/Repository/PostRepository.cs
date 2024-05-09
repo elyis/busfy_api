@@ -35,9 +35,13 @@ namespace busfy_api.src.Infrastructure.Repository
             _distributedCache = distributedCache;
         }
 
-        public async Task<Post> AddAsync(CreatePostBody body, UserModel creator, ContentCategory category)
+        public async Task<Post> AddAsync(CreatePostBody body, UserModel creator, ContentCategory category, Subscription? subscription)
         {
             var isTextPost = body.Text != null;
+
+            var subscriptionType = ContentSubscriptionType.Public.ToString();
+            if (subscription != null)
+                subscriptionType = subscription.Type;
 
             var post = new Post
             {
@@ -48,7 +52,8 @@ namespace busfy_api.src.Infrastructure.Repository
                 IsFormed = isTextPost,
                 Creator = creator,
                 IsCommentingAllowed = body.IsCommentingAllowed,
-                ContentSubscriptionType = body.SubscriptionType.ToString(),
+                ContentSubscriptionType = subscriptionType,
+                Subscription = subscription
             };
 
             post = (await _context.Posts.AddAsync(post)).Entity;
@@ -423,7 +428,18 @@ namespace busfy_api.src.Infrastructure.Repository
                 .Where(e => e.IsFormed && e.CreatorId == creatorId)
                 .CountAsync();
         }
+
+        public async Task<Post?> UpdateSubscriptionType(Guid postId, Subscription subscription)
+        {
+            var post = await GetAsync(postId);
+            if (post == null || subscription == null)
+                return null;
+
+            post.Subscription = subscription;
+            post.ContentSubscriptionType = ContentSubscriptionType.Single.ToString();
+            await _context.SaveChangesAsync();
+
+            return post;
+        }
     }
-
-
 }

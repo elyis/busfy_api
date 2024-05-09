@@ -153,6 +153,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             return await _context.UserSubscriptions
                 .Include(e => e.Subscription)
+                    .ThenInclude(e => e.UniqueContent)
                 .Where(e => e.UserId == userId)
                 .Skip(offset)
                 .Take(count)

@@ -20,6 +20,8 @@ namespace busfy_api.src.Domain.Models
         public UserModel Creator { get; set; }
         public Guid CreatorId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public Subscription? Subscription { get; set; }
+        public Guid? SubscriptionId { get; set; }
 
         [JsonIgnore]
         public List<PostLike> Likes { get; set; } = new List<PostLike>();
