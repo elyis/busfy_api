@@ -6,6 +6,8 @@ namespace busfy_api.src.Domain.IRepository
     public interface IUserRepository
     {
         Task<UserModel?> AddAsync(SignUpBody body, string role);
+        Task<IEnumerable<UserModel>> GetAll(int count, int offset);
+        Task<int> GetCountUsers();
         Task<bool> RemoveSession(Guid sessionId);
         Task<UserModel?> GetAsync(Guid id);
         Task<UserModel?> UpdateProfileAsync(UpdateProfileBody body, Guid id);
@@ -14,6 +16,7 @@ namespace busfy_api.src.Domain.IRepository
         Task<IEnumerable<UserSession>> GetUserSessions(Guid userId);
         Task<bool> IsVerifiedSession(Guid sessionId);
         Task<UserSession?> VerifySession(Guid sessionId);
+        Task<UserModel?> LockOutUser(Guid userId);
         Task<string?> UpdateTokenAsync(string refreshToken, Guid sessionId, TimeSpan? duration = null);
         Task<UserSession?> GetUserSessionByTokenAndUserAsync(string refreshTokenHash);
         Task<UserSession?> GetUserSession(Guid id);
@@ -27,5 +30,6 @@ namespace busfy_api.src.Domain.IRepository
         Task<string?> SetRecoveryCode(string email, string recoveryCode, TimeSpan? interval = null);
         Task<UserModel?> ResetPasswordAndRemoveSessions(ResetPasswordBody resetPasswordBody);
         Task<UserModel?> UpdateBackgroundImage(Guid id, string filename);
+        Task<UserModel?> UnlockUser(Guid userId);
     }
 }

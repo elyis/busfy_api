@@ -447,5 +447,64 @@ namespace busfy_api.src.Infrastructure.Repository
 
             return post;
         }
+
+        public async Task<int> GetFavoritePostCount(Guid userId)
+        {
+            return await _context.FavoritePosts
+                .CountAsync(e => e.UserId == userId);
+        }
+
+        public async Task<FavoritePost?> GetFavoritePost(Guid userId, Guid postId)
+        {
+            return await _context.FavoritePosts
+                .FirstOrDefaultAsync(e => e.UserId == userId && e.PostId == postId);
+        }
+
+        public async Task<FavoritePost?> AddFavoritePost(UserModel user, Post post)
+        {
+            var favoritePost = await GetFavoritePost(user.Id, post.Id);
+            if (favoritePost != null)
+                return null;
+
+            favoritePost = new FavoritePost
+            {
+                Post = post,
+                User = user
+            };
+
+            favoritePost = (await _context.FavoritePosts.AddAsync(favoritePost)).Entity;
+            await _context.SaveChangesAsync();
+
+            return favoritePost;
+        }
+
+        public async Task<bool> RemoveFavoritePost(Guid userId, Guid postId)
+        {
+            var favoritePost = await GetFavoritePost(userId, postId);
+            if (favoritePost == null)
+                return true;
+
+            _context.FavoritePosts.Remove(favoritePost);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<IEnumerable<FavoritePost>> GetFavoritePostsAndPost(Guid userId, int count, int offset, bool isDescending = true)
+        {
+            var query = _context.FavoritePosts
+                .Include(e => e.Post)
+                    .ThenInclude(e => e.Creator)
+                .Where(e => e.UserId == userId);
+
+            if (isDescending)
+                query = query.OrderByDescending(e => e.CreatedAt);
+            else
+                query = query.OrderBy(e => e.CreatedAt);
+
+            return await query
+                .Skip(offset)
+                .Take(count)
+                .ToListAsync();
+        }
     }
 }

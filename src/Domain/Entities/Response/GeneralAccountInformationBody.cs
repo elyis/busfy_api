@@ -4,6 +4,7 @@ namespace busfy_api.src.Domain.Entities.Response
 {
     public class GeneralAccountInformationBody
     {
+        public Guid Id { get; set; }
         public string? UrlIcon { get; set; }
         public string Nickname { get; set; }
         public string? UserTag { get; set; }

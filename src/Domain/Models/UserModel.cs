@@ -21,8 +21,6 @@ namespace busfy_api.src.Domain.Models
         public string? Bio { get; set; }
 
         public string AccountStatus { get; set; }
-        public DateTime? LockDuration { get; set; }
-        public string? LockReason { get; set; }
 
         public DateTime? RestoreCodeValidBefore { get; set; }
         public bool WasPasswordResetRequest { get; set; }
@@ -32,12 +30,16 @@ namespace busfy_api.src.Domain.Models
 
         [JsonIgnore]
         public List<UserSession> Sessions { get; set; } = new List<UserSession>();
+
         [JsonIgnore]
         public List<Post> Posts { get; set; } = new List<Post>();
+
         [JsonIgnore]
         public List<PostLike> PostLikes { get; set; } = new List<PostLike>();
+
         [JsonIgnore]
         public List<PostComment> PostComments { get; set; } = new List<PostComment>();
+        public List<FavoritePost> Favorites { get; set; } = new();
 
         public ProfileBody ToProfileBody()
         {
@@ -59,6 +61,7 @@ namespace busfy_api.src.Domain.Models
         {
             return new GeneralAccountInformationBody
             {
+                Id = Id,
                 AccountStatus = Enum.Parse<UserAccountStatus>(AccountStatus),
                 Nickname = Nickname,
                 UrlIcon = string.IsNullOrEmpty(Image) ? null : $"{Constants.webPathToProfileIcons}{Image}",

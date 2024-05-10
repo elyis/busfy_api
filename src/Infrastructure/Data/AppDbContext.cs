@@ -23,6 +23,7 @@ namespace busfy_api.src.Infrastructure.Data
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
         public DbSet<UnconfirmedAccount> UnconfirmedAccounts { get; set; }
         public DbSet<SelectedUserCategory> SelectedUserCategories { get; set; }
+        public DbSet<FavoritePost> FavoritePosts { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -34,6 +35,12 @@ namespace busfy_api.src.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<FavoritePost>().HasKey(e => new
+            {
+                e.PostId,
+                e.UserId
+            });
+
             base.OnModelCreating(modelBuilder);
         }
     }

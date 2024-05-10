@@ -241,25 +241,66 @@ namespace busfy_api.src.Web.Controllers
         )
         {
             var tokenPayload = _jwtService.GetTokenPayload(token);
-            var posts = await _postRepository.GetFavouritePosts(tokenPayload.UserId, count, offset, isDescending);
-            var totalPosts = await _postRepository.GetCountFavouritePosts(tokenPayload.UserId);
+            var favoritePosts = await _postRepository.GetFavoritePostsAndPost(tokenPayload.UserId, count, offset, isDescending);
+            var posts = favoritePosts.Select(e => e.Post);
 
             var items = posts.Select(e => e.ToPostBody()).ToList();
-
-            foreach (var item in items)
+            var postIds = items.Select(e => e.Id);
+            var favouritePosts = await _postRepository.GetAllLikes(tokenPayload.UserId, postIds);
+            foreach (var favouritePost in favouritePosts)
             {
-                item.HasEvaluated = true;
+                var temp = items.FirstOrDefault(e => e.Id == favouritePost.PostId);
+                if (temp != null)
+                {
+                    temp.HasEvaluated = true;
+                }
             }
 
+            var totalFavoritePost = await _postRepository.GetFavoritePostCount(tokenPayload.UserId);
             return Ok(new PaginationResponse<PostBody>
             {
                 Count = count,
                 Offset = offset,
-                Total = totalPosts,
+                Total = totalFavoritePost,
                 Items = items
             });
         }
 
+        [HttpPost("post/favourite"), Authorize]
+        [SwaggerOperation("Добавить избранные")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(400, "PostId не существует")]
+        [SwaggerResponse(409)]
+        public async Task<IActionResult> CreateFavoritePost(
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token,
+            [FromQuery, Required] Guid postId
+        )
+        {
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+            var post = await _postRepository.GetAsync(postId);
+            if (post == null)
+                return BadRequest("postId is not exits");
+
+            var user = await _userRepository.GetAsync(tokenPayload.UserId);
+            if (user == null)
+                return BadRequest();
+
+            var result = await _postRepository.AddFavoritePost(user, post);
+            return result == null ? Conflict() : Ok();
+        }
+
+        [HttpPost("post/favourite"), Authorize]
+        [SwaggerOperation("Удалить из избранных")]
+        [SwaggerResponse(204)]
+        public async Task<IActionResult> DeleteFavoritePost(
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token,
+            [FromQuery, Required] Guid postId
+        )
+        {
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+            var result = await _postRepository.RemoveFavoritePost(tokenPayload.UserId, postId);
+            return NoContent();
+        }
 
         [HttpGet("post/likes")]
         [SwaggerOperation("Получить число лайков в посте")]
@@ -274,6 +315,7 @@ namespace busfy_api.src.Web.Controllers
         }
 
         [HttpGet("tape/subscriptions"), Authorize]
+        [SwaggerOperation("Получить ленту по подпискам")]
         [SwaggerResponse(200, Type = typeof(PaginationResponse<PostBody>))]
 
         public async Task<IActionResult> GetTapeBySubscruptions(

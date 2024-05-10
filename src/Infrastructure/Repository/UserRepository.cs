@@ -386,5 +386,42 @@ namespace busfy_api.src.Infrastructure.Repository
             if (user.UserTag != null)
                 await _distributedCache.SetStringAsync($"{_prefix}{user.UserTag}", resultString, _options);
         }
+
+        public async Task<IEnumerable<UserModel>> GetAll(int count, int offset)
+        {
+            return await _context.Users
+                .Skip(offset)
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetCountUsers()
+        {
+            return await _context.Users.CountAsync();
+        }
+
+        public async Task<UserModel?> LockOutUser(Guid userId)
+        {
+            var user = await GetAsync(userId);
+            if (user == null)
+                return null;
+
+            user.AccountStatus = UserAccountStatus.Banned.ToString();
+            await _context.SaveChangesAsync();
+
+            return user;
+        }
+
+        public async Task<UserModel?> UnlockUser(Guid userId)
+        {
+            var user = await GetAsync(userId);
+            if (user == null)
+                return null;
+
+            user.AccountStatus = UserAccountStatus.Active.ToString();
+            await _context.SaveChangesAsync();
+
+            return user;
+        }
     }
 }

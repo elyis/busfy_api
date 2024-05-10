@@ -11,6 +11,12 @@ namespace busfy_api.src.Domain.IRepository
         Task<Post?> GetByFilename(string filename);
         Task<Post?> UpdateSubscriptionType(Guid postId, Subscription subscription);
         Task<int> GetCountPosts();
+        Task<int> GetFavoritePostCount(Guid userId);
+        Task<FavoritePost?> GetFavoritePost(Guid userId, Guid postId);
+        Task<FavoritePost?> AddFavoritePost(UserModel user, Post post);
+        Task<bool> RemoveFavoritePost(Guid userId, Guid postId);
+        Task<IEnumerable<FavoritePost>> GetFavoritePostsAndPost(Guid userId, int count, int offset, bool isDescending = true);
+
         Task<int> GetCountLikes(Guid id);
         Task<int> GetCountLikesByAuthor(Guid userId);
         Task<int> GetCountFavouritePosts(Guid userId);

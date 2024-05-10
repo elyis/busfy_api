@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Headers;
 using busfy_api.src.Domain.Entities.Response;
+using busfy_api.src.Domain.Enums;
 using busfy_api.src.Domain.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -82,5 +84,58 @@ namespace busfy_api.src.Web.Controllers
             return Ok(profiles);
         }
 
+        [HttpGet("accounts"), Authorize(Roles = nameof(UserRole.Admin))]
+        [SwaggerOperation("Получить список пользователей")]
+        [SwaggerResponse(200, Type = typeof(PaginationResponse<GeneralAccountInformationBody>))]
+
+        public async Task<IActionResult> GetUsers(
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token,
+            [FromQuery, Range(0, int.MaxValue)] int count = 10,
+            [FromQuery, Range(0, int.MaxValue)] int offset = 0
+        )
+        {
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+
+            var users = await _userRepository.GetAll(count, offset);
+            var result = users
+                .Where(e => e.Id != tokenPayload.UserId)
+                .Select(e => e.ToGeneralAccountInformationBody());
+
+            var totalUsers = await _userRepository.GetCountUsers();
+
+            return Ok(new PaginationResponse<GeneralAccountInformationBody>
+            {
+                Count = count,
+                Items = result,
+                Offset = offset,
+                Total = totalUsers
+            });
+        }
+
+        [HttpPost("account/lockout"), Authorize(Roles = nameof(UserRole.Admin))]
+        [SwaggerOperation("Заблокировать пользователя")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(404)]
+
+        public async Task<IActionResult> LockOutUser(
+            [FromQuery, Required] Guid userId
+        )
+        {
+            var result = await _userRepository.LockOutUser(userId);
+            return result == null ? NotFound() : Ok();
+        }
+
+        [HttpPost("account/unblock"), Authorize(Roles = nameof(UserRole.Admin))]
+        [SwaggerOperation("Разблокировать пользователя")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(404)]
+
+        public async Task<IActionResult> UnblockUser(
+            [FromQuery, Required] Guid userId
+        )
+        {
+            var result = await _userRepository.UnlockUser(userId);
+            return result == null ? NotFound() : Ok();
+        }
     }
 }

@@ -7,7 +7,6 @@ namespace busfy_api.src.Domain.Enums
     public enum UserAccountStatus
     {
         Active,
-        Suspended,
         Banned
     }
 }

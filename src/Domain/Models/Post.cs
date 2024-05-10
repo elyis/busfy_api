@@ -27,6 +27,7 @@ namespace busfy_api.src.Domain.Models
         public List<PostLike> Likes { get; set; } = new List<PostLike>();
         [JsonIgnore]
         public List<PostComment> Comments { get; set; } = new List<PostComment>();
+        public List<FavoritePost> FavoritePosts { get; set; } = new();
 
         public PostBody ToPostBody()
         {
