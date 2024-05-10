@@ -289,7 +289,7 @@ namespace busfy_api.src.Web.Controllers
             return result == null ? Conflict() : Ok();
         }
 
-        [HttpPost("post/favourite"), Authorize]
+        [HttpDelete("post/favourite"), Authorize]
         [SwaggerOperation("Удалить из избранных")]
         [SwaggerResponse(204)]
         public async Task<IActionResult> DeleteFavoritePost(
