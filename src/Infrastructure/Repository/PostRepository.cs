@@ -15,6 +15,7 @@ namespace busfy_api.src.Infrastructure.Repository
         private readonly IDistributedCache _distributedCache;
         private readonly string _prefix = "post:";
         private readonly string _prefixForMany = "posts:";
+        private readonly string _prefixLike = "like:post:";
         private readonly DistributedCacheEntryOptions _optionsForSingleEntity = new()
         {
             SlidingExpiration = TimeSpan.FromMinutes(3),
@@ -110,6 +111,9 @@ namespace busfy_api.src.Infrastructure.Repository
             if (postLike != null)
                 return null;
 
+            var cachedKey = $"{_prefixLike}{post.Id}";
+            int countLikes = await GetCountLikes(post.Id);
+
             postLike = new PostLike
             {
                 Post = post,
@@ -117,6 +121,10 @@ namespace busfy_api.src.Infrastructure.Repository
             };
             postLike = (await _context.PostLikes.AddAsync(postLike)).Entity;
             await _context.SaveChangesAsync();
+
+            countLikes += 1;
+            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+
             return postLike;
         }
 
@@ -242,27 +250,28 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<Post?> GetAsync(Guid id)
         {
-            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
+            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
             Post? post = null;
 
-            // if (!string.IsNullOrEmpty(cachedString))
-            // {
-            //     post = DeserializeObject<Post>(cachedString);
-            //     if (post != null)
-            //     {
-            //         _context.Attach(post);
-            //         return post;
-            //     }
-            // }
+            if (!string.IsNullOrEmpty(cachedString))
+            {
+                post = DeserializeObject<Post>(cachedString);
+                if (post != null)
+                {
+                    _context.Attach(post);
+                    return post;
+                }
+            }
 
             post = await _context.Posts
                 .Include(e => e.Creator)
                 .FirstOrDefaultAsync(e => e.Id == id);
-            // if (post != null)
-            // {
-            //     var resultString = SerializeObject(post);
-            //     await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", resultString, _optionsForSingleEntity);
-            // }
+
+            if (post != null)
+            {
+                var resultString = SerializeObject(post);
+                await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", resultString, _optionsForSingleEntity);
+            }
 
             return post;
         }
@@ -326,16 +335,15 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<int> GetCountLikes(Guid id)
         {
-            // var cachedKey = $"{_prefix}likes:post:{id}";
-            // var cachedData = await _distributedCache.GetStringAsync(cachedKey);
-            // if (!string.IsNullOrEmpty(cachedData))
-            //     return JsonConvert.DeserializeObject<int>(cachedData);
+            var cachedKey = $"{_prefixLike}{id}";
+            var cachedData = await _distributedCache.GetStringAsync(cachedKey);
+            if (!string.IsNullOrEmpty(cachedData))
+                return JsonConvert.DeserializeObject<int>(cachedData);
 
             var countLikes = await _context.PostLikes
-                .Where(e => e.PostId == id)
-                .CountAsync();
+                .CountAsync(e => e.PostId == id);
 
-            // await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
+            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return countLikes;
         }
 
@@ -350,7 +358,7 @@ namespace busfy_api.src.Infrastructure.Repository
             post.Type = type.ToString();
 
             await _context.SaveChangesAsync();
-            // await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _optionsForSingleEntity);
+            await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _optionsForSingleEntity);
             return post;
         }
 
@@ -404,8 +412,15 @@ namespace busfy_api.src.Infrastructure.Repository
             if (like == null)
                 return true;
 
+            var cachedKey = $"{_prefixLike}{postId}";
+            int countLikes = await GetCountLikes(postId);
+
             _context.PostLikes.Remove(like);
             await _context.SaveChangesAsync();
+
+            countLikes -= 1;
+
+            await _distributedCache.SetStringAsync(cachedKey, countLikes.ToString());
             return true;
         }
 
@@ -445,6 +460,7 @@ namespace busfy_api.src.Infrastructure.Repository
             post.ContentSubscriptionType = ContentSubscriptionType.Single.ToString();
             await _context.SaveChangesAsync();
 
+            await _distributedCache.SetStringAsync($"{_prefix}{post.Id}", SerializeObject(post), _optionsForSingleEntity);
             return post;
         }
 
