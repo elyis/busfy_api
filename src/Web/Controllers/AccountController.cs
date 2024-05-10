@@ -125,7 +125,7 @@ namespace busfy_api.src.Web.Controllers
             return result == null ? NotFound() : Ok();
         }
 
-        [HttpPost("account/unblock"), Authorize(Roles = nameof(UserRole.Admin))]
+        [HttpDelete("account/unblock"), Authorize(Roles = nameof(UserRole.Admin))]
         [SwaggerOperation("Разблокировать пользователя")]
         [SwaggerResponse(200)]
         [SwaggerResponse(404)]
