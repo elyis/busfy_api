@@ -41,31 +41,31 @@ namespace busfy_api.src.Infrastructure.Repository
 
             await _context.SelectedUserCategories.AddAsync(selectedCategory);
             await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefix}{user.Id}:{category.Name}", SerializeObject(selectedCategory), _options);
+            // await _distributedCache.SetStringAsync($"{_prefix}{user.Id}:{category.Name}", SerializeObject(selectedCategory), _options);
 
             return selectedCategory;
         }
 
         public async Task<SelectedUserCategory?> GetByIdAsync(Guid userId, string categoryName)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{userId}:{categoryName}");
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                var cachedCategory = DeserializeObject<SelectedUserCategory>(cachedString);
-                if (cachedCategory != null)
-                {
-                    _context.Attach(cachedCategory);
-                    return cachedCategory;
-                }
-            }
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{userId}:{categoryName}");
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     var cachedCategory = DeserializeObject<SelectedUserCategory>(cachedString);
+            //     if (cachedCategory != null)
+            //     {
+            //         _context.Attach(cachedCategory);
+            //         return cachedCategory;
+            //     }
+            // }
 
             var selectedCategory = await _context.SelectedUserCategories
                 .FirstOrDefaultAsync(e => e.UserId == userId && e.CategoryName == categoryName);
-            if (selectedCategory != null)
-            {
-                await _distributedCache.SetStringAsync($"{_prefix}{selectedCategory.UserId}:{selectedCategory.CategoryName}", SerializeObject(selectedCategory), _options);
-                _context.Attach(selectedCategory);
-            }
+            // if (selectedCategory != null)
+            // {
+            //     await _distributedCache.SetStringAsync($"{_prefix}{selectedCategory.UserId}:{selectedCategory.CategoryName}", SerializeObject(selectedCategory), _options);
+            //     _context.Attach(selectedCategory);
+            // }
 
             return selectedCategory;
         }
@@ -85,7 +85,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             _context.SelectedUserCategories.Remove(selectedUserCategory);
             await _context.SaveChangesAsync();
-            await _distributedCache.RemoveAsync($"{_prefix}{userId}:{selectedUserCategory.CategoryName}");
+            // await _distributedCache.RemoveAsync($"{_prefix}{userId}:{selectedUserCategory.CategoryName}");
 
             return true;
         }

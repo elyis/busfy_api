@@ -41,7 +41,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             await _context.ContentCategories.AddAsync(category);
             await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefix}{category.Name}", SerializeObject(category), _options);
+            //await _distributedCache.SetStringAsync($"{_prefix}{category.Name}", SerializeObject(category), _options);
 
             return category;
         }
@@ -54,33 +54,33 @@ namespace busfy_api.src.Infrastructure.Repository
 
             _context.ContentCategories.Remove(category);
             await _context.SaveChangesAsync();
-            await _distributedCache.RemoveAsync($"{_prefix}{category.Name}");
+            //await _distributedCache.RemoveAsync($"{_prefix}{category.Name}");
 
             return true;
         }
 
         public async Task<ContentCategory?> Get(string name)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{name}");
+            //var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{name}");
             ContentCategory? contentCategory = null;
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                contentCategory = DeserializeObject<ContentCategory>(cachedString);
-                if (contentCategory != null)
-                {
-                    _context.Attach(contentCategory);
-                    return contentCategory;
-                }
-            }
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     contentCategory = DeserializeObject<ContentCategory>(cachedString);
+            //     if (contentCategory != null)
+            //     {
+            //         _context.Attach(contentCategory);
+            //         return contentCategory;
+            //     }
+            // }
 
             var nameInLower = name.ToLower();
             contentCategory = await _context.ContentCategories.FirstOrDefaultAsync(e => e.Name.ToLower() == nameInLower);
-            if (contentCategory != null)
-            {
-                var resultString = SerializeObject(contentCategory);
-                await _distributedCache.SetStringAsync($"{_prefix}{contentCategory.Name}", resultString, _options);
-                _context.Attach(contentCategory);
-            }
+            // if (contentCategory != null)
+            // {
+            //     var resultString = SerializeObject(contentCategory);
+            //     await _distributedCache.SetStringAsync($"{_prefix}{contentCategory.Name}", resultString, _options);
+            //     _context.Attach(contentCategory);
+            // }
 
             return contentCategory;
         }
@@ -115,7 +115,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             category.Image = newImage;
             await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefix}{name}", SerializeObject(category), _options);
+            // await _distributedCache.SetStringAsync($"{_prefix}{name}", SerializeObject(category), _options);
 
             return category;
         }

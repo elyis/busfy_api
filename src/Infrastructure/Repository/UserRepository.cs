@@ -43,7 +43,7 @@ namespace busfy_api.src.Infrastructure.Repository
             user.Bio = body.Bio;
 
             await _context.SaveChangesAsync();
-            await CacheUser(user);
+            // await CacheUser(user);
 
             return user;
         }
@@ -66,7 +66,7 @@ namespace busfy_api.src.Infrastructure.Repository
             var result = await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            await CacheUser(user);
+            // await CacheUser(user);
 
             return result?.Entity;
         }
@@ -88,7 +88,7 @@ namespace busfy_api.src.Infrastructure.Repository
             user.RestoreCodeValidBefore = DateTime.UtcNow.Add(interval.Value);
             user.WasPasswordResetRequest = true;
             await _context.SaveChangesAsync();
-            await CacheUser(user);
+            // await CacheUser(user);
 
             return user.RestoreCode;
         }
@@ -137,7 +137,7 @@ namespace busfy_api.src.Infrastructure.Repository
             var sessions = await GetUserSessions(user.Id);
             _context.UserSessions.RemoveRange(sessions);
             await _context.SaveChangesAsync();
-            await CacheUser(user);
+            // await CacheUser(user);
 
             return user;
         }
@@ -174,46 +174,46 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<UserModel?> GetAsync(Guid id)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{id}");
             UserModel? user = null;
 
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                user = DeserializeObject<UserModel>(cachedString);
-                if (user != null)
-                {
-                    _context.Attach(user);
-                    return user;
-                }
-            }
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     user = DeserializeObject<UserModel>(cachedString);
+            //     if (user != null)
+            //     {
+            //         _context.Attach(user);
+            //         return user;
+            //     }
+            // }
 
             user = await _context.Users
                 .FirstOrDefaultAsync(e => e.Id == id);
-            if (user != null)
-                await CacheUser(user);
+            // if (user != null)
+            //     await CacheUser(user);
 
             return user;
         }
 
         public async Task<UserModel?> GetAsync(string email)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{email}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{email}");
             UserModel? user = null;
 
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                user = DeserializeObject<UserModel>(cachedString);
-                if (user != null)
-                {
-                    _context.Attach(user);
-                    return user;
-                }
-            }
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     user = DeserializeObject<UserModel>(cachedString);
+            //     if (user != null)
+            //     {
+            //         _context.Attach(user);
+            //         return user;
+            //     }
+            // }
 
             user = await _context.Users
                 .FirstOrDefaultAsync(e => e.Email == email);
-            if (user != null)
-                await CacheUser(user);
+            // if (user != null)
+            //     await CacheUser(user);
 
             return user;
         }
@@ -238,7 +238,7 @@ namespace busfy_api.src.Infrastructure.Repository
             user.Image = filename;
             await _context.SaveChangesAsync();
 
-            await CacheUser(user);
+            // await CacheUser(user);
             return user;
         }
 
@@ -296,22 +296,22 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<UserModel?> GetUserByUserTag(string userTag)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{userTag}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{userTag}");
             UserModel? user = null;
 
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                user = DeserializeObject<UserModel>(cachedString);
-                if (user != null)
-                {
-                    _context.Attach(user);
-                    return user;
-                }
-            }
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     user = DeserializeObject<UserModel>(cachedString);
+            //     if (user != null)
+            //     {
+            //         _context.Attach(user);
+            //         return user;
+            //     }
+            // }
 
             user = await _context.Users.FirstOrDefaultAsync(e => e.UserTag == userTag);
-            if (user != null)
-                await CacheUser(user);
+            // if (user != null)
+            //     await CacheUser(user);
 
             return user;
         }
@@ -329,7 +329,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             user.UserTag = userTag;
             await _context.SaveChangesAsync();
-            await CacheUser(user);
+            // await CacheUser(user);
             return user;
         }
 
@@ -363,7 +363,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             user.BackgroundImage = filename;
             await _context.SaveChangesAsync();
-            await CacheUser(user);
+            // await CacheUser(user);
 
             return user;
         }

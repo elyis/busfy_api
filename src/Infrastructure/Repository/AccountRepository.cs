@@ -49,32 +49,32 @@ namespace busfy_api.src.Infrastructure.Repository
             }
 
             await _context.SaveChangesAsync();
-            var resultString = SerializeObject(account);
-            await _distributedCache.SetStringAsync($"{_prefix}{account.Email}", resultString, _options);
+            // var resultString = SerializeObject(account);
+            // await _distributedCache.SetStringAsync($"{_prefix}{account.Email}", resultString, _options);
             return account;
         }
 
         public async Task<UnconfirmedAccount?> Get(string email)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{email}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefix}{email}");
             UnconfirmedAccount? account = null;
 
-            if (!string.IsNullOrEmpty(cachedString))
-            {
-                account = DeserializeObject<UnconfirmedAccount>(cachedString);
-                if (account != null)
-                {
-                    _context.Attach(account);
-                    return account;
-                }
-            }
+            // if (!string.IsNullOrEmpty(cachedString))
+            // {
+            //     account = DeserializeObject<UnconfirmedAccount>(cachedString);
+            //     if (account != null)
+            //     {
+            //         _context.Attach(account);
+            //         return account;
+            //     }
+            // }
 
             account = await _context.UnconfirmedAccounts.FirstOrDefaultAsync(e => e.Email == email);
-            if (account != null)
-            {
-                var resultString = SerializeObject(account);
-                await _distributedCache.SetStringAsync($"{_prefix}{account.Email}", resultString, _options);
-            }
+            // if (account != null)
+            // {
+            //     var resultString = SerializeObject(account);
+            //     await _distributedCache.SetStringAsync($"{_prefix}{account.Email}", resultString, _options);
+            // }
 
             return account;
         }
@@ -87,7 +87,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             _context.UnconfirmedAccounts.Remove(account);
             await _context.SaveChangesAsync();
-            await _distributedCache.RemoveAsync($"{_prefix}{account.Email}");
+            // await _distributedCache.RemoveAsync($"{_prefix}{account.Email}");
             return true;
         }
 

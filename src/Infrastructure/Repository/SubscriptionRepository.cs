@@ -49,7 +49,7 @@ namespace busfy_api.src.Infrastructure.Repository
             subscription = (await _context.Subscriptions.AddAsync(subscription)).Entity;
             await _context.UserSubscriptions.AddAsync(userSubscription);
             await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
+            // await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
 
             return subscription;
         }
@@ -75,30 +75,30 @@ namespace busfy_api.src.Infrastructure.Repository
                 userSubscription.EndDate = DateTime.UtcNow.AddDays(subscription.CountDays);
 
             await _context.SaveChangesAsync();
-            await _distributedCache.SetStringAsync($"{_prefixUserSubscription}{id}:{user.Id}", SerializeObject(userSubscription), _options);
+            // await _distributedCache.SetStringAsync($"{_prefixUserSubscription}{id}:{user.Id}", SerializeObject(userSubscription), _options);
 
             return userSubscription;
         }
 
         public async Task<UserSubscription?> GetUserSubscriptionAsync(Guid subscriptionId, Guid userId)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefixUserSubscription}{subscriptionId}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefixUserSubscription}{subscriptionId}");
             UserSubscription? subscription = null;
-            if (cachedString != null)
-            {
-                subscription = DeserializeObject<UserSubscription>(cachedString);
-                if (subscription != null)
-                {
-                    _context.Attach(subscription);
-                    return subscription;
-                }
-            }
+            // if (cachedString != null)
+            // {
+            //     subscription = DeserializeObject<UserSubscription>(cachedString);
+            //     if (subscription != null)
+            //     {
+            //         _context.Attach(subscription);
+            //         return subscription;
+            //     }
+            // }
 
             subscription = await _context.UserSubscriptions
                 .FirstOrDefaultAsync(e =>
                     e.SubscriptionId == subscriptionId && e.UserId == userId);
-            if (subscription != null)
-                await _distributedCache.SetStringAsync($"{_prefixUserSubscription}{subscriptionId}:{userId}", SerializeObject(subscription), _options);
+            // if (subscription != null)
+            //     await _distributedCache.SetStringAsync($"{_prefixUserSubscription}{subscriptionId}:{userId}", SerializeObject(subscription), _options);
 
             return subscription;
         }
@@ -121,29 +121,29 @@ namespace busfy_api.src.Infrastructure.Repository
 
             _context.Subscriptions.Remove(subscription);
             await _context.SaveChangesAsync();
-            await _distributedCache.RemoveAsync($"{_prefixAdditional}{subscription.Id}");
+            // await _distributedCache.RemoveAsync($"{_prefixAdditional}{subscription.Id}");
 
             return true;
         }
 
         public async Task<Subscription?> GetSubscriptionAsync(Guid id)
         {
-            var cachedString = await _distributedCache.GetStringAsync($"{_prefixAdditional}{id}");
+            // var cachedString = await _distributedCache.GetStringAsync($"{_prefixAdditional}{id}");
             Subscription? subscription = null;
-            if (cachedString != null)
-            {
-                subscription = DeserializeObject<Subscription>(cachedString);
-                if (subscription != null)
-                {
-                    _context.Attach(subscription);
-                    return subscription;
-                }
-            }
+            // if (cachedString != null)
+            // {
+            //     subscription = DeserializeObject<Subscription>(cachedString);
+            //     if (subscription != null)
+            //     {
+            //         _context.Attach(subscription);
+            //         return subscription;
+            //     }
+            // }
 
             subscription = await _context.Subscriptions
                 .FirstOrDefaultAsync(e => e.Id == id);
-            if (subscription != null)
-                await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
+            // if (subscription != null)
+            //     await _distributedCache.SetStringAsync($"{_prefixAdditional}{subscription.Id}", SerializeObject(subscription), _options);
 
             return subscription;
         }

@@ -228,8 +228,6 @@ namespace busfy_api.src.Web.Controllers
             if (post?.CreatorId != tokenInfo.UserId)
                 return Forbid();
 
-            if (post.IsFormed)
-                return BadRequest();
 
             string? fileExtension = null;
             var fileStream = file.OpenReadStream();
