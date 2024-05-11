@@ -168,7 +168,7 @@ namespace busfy_api.src.Web.Controllers
                 var tokenPayload = _jwtService.GetTokenPayload(token);
                 userId = tokenPayload.UserId;
 
-                var userSubscription = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0);
+                var userSubscription = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MaxValue, 0);
 
                 var subscriptionsTypes = userSubscription
                     .Select(e => e.Subscription.Type)
@@ -217,7 +217,7 @@ namespace busfy_api.src.Web.Controllers
                 var tokenPayload = _jwtService.GetTokenPayload(token);
                 userId = tokenPayload.UserId;
 
-                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0))
+                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MaxValue, 0))
                     .Select(e => e.Subscription.Type)
                     .Distinct()
                     .Select(Enum.Parse<ContentSubscriptionType>);
@@ -328,7 +328,7 @@ namespace busfy_api.src.Web.Controllers
             var types = new List<ContentSubscriptionType>() { ContentSubscriptionType.Public };
             var tokenPayload = _jwtService.GetTokenPayload(token);
 
-            var userSubscriptions = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0);
+            var userSubscriptions = await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MaxValue, 0);
             var subscriptionsTypes = userSubscriptions
                 .Select(e => e.Subscription.Type)
                 .Distinct()
@@ -401,7 +401,7 @@ namespace busfy_api.src.Web.Controllers
                 var tokenPayload = _jwtService.GetTokenPayload(token);
                 userId = tokenPayload.UserId;
 
-                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MinValue, 0))
+                var subscriptionsTypes = (await _subscriptionRepository.GetSubscriptionsByUserAndSubscription(tokenPayload.UserId, int.MaxValue, 0))
                     .Select(e => e.Subscription.Type)
                     .Distinct()
                     .Select(Enum.Parse<ContentSubscriptionType>);

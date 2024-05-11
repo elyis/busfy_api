@@ -32,7 +32,7 @@ namespace busfy_api.Migrations
 
                     b.HasKey("Name");
 
-                    b.ToTable("ContentCategories");
+                    b.ToTable("ContentCategories", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.FavoritePost", b =>
@@ -50,7 +50,7 @@ namespace busfy_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FavoritePosts");
+                    b.ToTable("FavoritePosts", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.Post", b =>
@@ -103,7 +103,7 @@ namespace busfy_api.Migrations
                     b.HasIndex("SubscriptionId")
                         .IsUnique();
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.PostComment", b =>
@@ -130,7 +130,7 @@ namespace busfy_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PostComments");
+                    b.ToTable("PostComments", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.PostLike", b =>
@@ -148,7 +148,7 @@ namespace busfy_api.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("PostLikes");
+                    b.ToTable("PostLikes", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.SelectedUserCategory", b =>
@@ -163,7 +163,7 @@ namespace busfy_api.Migrations
 
                     b.HasIndex("CategoryName");
 
-                    b.ToTable("SelectedUserCategories");
+                    b.ToTable("SelectedUserCategories", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.Subscription", b =>
@@ -192,7 +192,7 @@ namespace busfy_api.Migrations
 
                     b.HasIndex("CreatorId");
 
-                    b.ToTable("Subscriptions");
+                    b.ToTable("Subscriptions", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.UnconfirmedAccount", b =>
@@ -222,7 +222,7 @@ namespace busfy_api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UnconfirmedAccounts");
+                    b.ToTable("UnconfirmedAccounts", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.UserModel", b =>
@@ -281,7 +281,7 @@ namespace busfy_api.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.UserSession", b =>
@@ -321,7 +321,7 @@ namespace busfy_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserSessions");
+                    b.ToTable("UserSessions", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.UserSubscription", b =>
@@ -339,7 +339,7 @@ namespace busfy_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserSubscriptions");
+                    b.ToTable("UserSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("busfy_api.src.Domain.Models.FavoritePost", b =>
