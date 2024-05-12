@@ -193,8 +193,8 @@ namespace busfy_api
 
             app.UseAuthentication();
             app.UseAuthorization();
+            // app.UseMiddleware<CustomStatusCodeMiddleware>();
 
-            app.UseMiddleware<CustomStatusCodeMiddleware>();
             app.MapControllers();
             InitDatabase(_config);
             app.Run();

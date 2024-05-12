@@ -88,11 +88,10 @@ namespace busfy_api.src.Infrastructure.Repository
 
         public async Task<PostComment?> AddPostComment(Post post, UserModel user, CreateCommentBody body)
         {
-            var postComment = await GetPostComment(user.Id, post.Id);
-            if (postComment != null || !post.IsCommentingAllowed)
+            if (!post.IsCommentingAllowed)
                 return null;
 
-            postComment = new PostComment
+            var postComment = new PostComment
             {
                 Post = post,
                 User = user,

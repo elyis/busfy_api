@@ -172,7 +172,7 @@ namespace busfy_api.src.Infrastructure.Repository
         {
             return await _context.UserSubscriptions
                 .Include(e => e.Subscription)
-                    .ThenInclude(e => e.UniqueContent)
+                    .ThenInclude(e => e.Posts)
                 .Where(e => e.UserId == userId)
                 .Skip(offset)
                 .Take(count)
@@ -201,7 +201,7 @@ namespace busfy_api.src.Infrastructure.Repository
 
             var ids = subscriptions.Select(e => e.Id);
             return await _context.UserSubscriptions
-                .Where(e => ids.Contains(e.SubscriptionId))
+                .Where(e => ids.Contains(e.SubscriptionId) && e.UserId != id)
                 .CountAsync();
         }
     }

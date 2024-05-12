@@ -14,7 +14,7 @@ namespace busfy_api.src.Domain.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public UserModel Creator { get; set; }
         public Guid CreatorId { get; set; }
-        public Post? UniqueContent { get; set; }
+        public List<Post> Posts { get; set; } = new();
 
         [JsonIgnore]
         public List<UserSubscription> Subscriptions { get; set; } = new List<UserSubscription>();

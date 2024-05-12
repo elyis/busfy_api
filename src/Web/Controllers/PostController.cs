@@ -75,7 +75,6 @@ namespace busfy_api.src.Web.Controllers
         [SwaggerOperation("Добавить комментарий к посту")]
         [SwaggerResponse(200)]
         [SwaggerResponse(400)]
-        [SwaggerResponse(409)]
 
         public async Task<IActionResult> CreatePostComment(
             [FromHeader(Name = nameof(HttpRequestHeader.Authorization))] string token,
@@ -93,7 +92,7 @@ namespace busfy_api.src.Web.Controllers
                 return BadRequest();
 
             var result = await _postRepository.AddPostComment(post, user, body);
-            return result == null ? Conflict() : Ok();
+            return Ok();
         }
 
         [HttpGet("post/{id}")]
@@ -178,7 +177,7 @@ namespace busfy_api.src.Web.Controllers
 
                 var uniqueContent = userSubscription
                     .Where(e => e.Subscription.Type == ContentSubscriptionType.Single.ToString())
-                    .Select(e => e.Subscription.UniqueContent.Id);
+                    .Select(e => e.Subscription.Posts.First().Id);
 
 
                 var categories = await _selectedUserCategoryRepository.GetAllByUserIdAsync(userId.Value);
