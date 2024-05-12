@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using System.Net.Http.Headers;
 using busfy_api.src.Domain.Entities.Request;
 using busfy_api.src.Domain.Entities.Response;
 using busfy_api.src.Domain.IRepository;
@@ -78,6 +79,20 @@ namespace busfy_api.src.Web.Controllers
 
             var subscription = await _subscriptionRepository.CreateSubscription(subscriptionBody, user);
             return subscription == null ? BadRequest() : Ok(subscription.ToSubscriptionBody());
+        }
+
+        [HttpGet("subscription"), Authorize]
+        [SwaggerOperation("Проверить наличие подписки")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(204)]
+
+        public async Task<IActionResult> GetSubscription(
+            [FromQuery, Required] Guid subscriptionId,
+            [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token)
+        {
+            var tokenPayload = _jwtService.GetTokenPayload(token);
+            var userSubscription = await _subscriptionRepository.GetUserSubscriptionAsync(subscriptionId, tokenPayload.UserId);
+            return userSubscription == null ? NoContent() : Ok();
         }
 
         [HttpGet("subscriptions-created"), Authorize]
