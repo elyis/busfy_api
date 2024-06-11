@@ -54,6 +54,12 @@ namespace busfy_api.src.Infrastructure.Repository
             return subscription;
         }
 
+        public async Task<bool> HasAnySubscriptionToCreator(Guid creatorId, Guid subId)
+        {
+            var subscriptions = await GetSubscriptionsByUserAndSubscription(subId, int.MaxValue, 0);
+            return subscriptions.Any(e => e.Subscription.CreatorId == creatorId);
+        }
+
         public async Task<UserSubscription?> CreateUserSubscription(Guid id, UserModel user)
         {
             var subscription = await GetSubscriptionAsync(id);
@@ -63,11 +69,12 @@ namespace busfy_api.src.Infrastructure.Repository
             var userSubscription = await GetUserSubscriptionAsync(id, user.Id);
             if (userSubscription == null)
             {
+                int countDays = subscription.CountDays == int.MaxValue ? 365 * 20 : subscription.CountDays;
                 userSubscription = new UserSubscription
                 {
                     Subscription = subscription,
                     User = user,
-                    EndDate = DateTime.UtcNow.AddDays(subscription.CountDays)
+                    EndDate = DateTime.UtcNow.AddDays(countDays)
                 };
                 await _context.UserSubscriptions.AddAsync(userSubscription);
             }

@@ -82,17 +82,17 @@ namespace busfy_api.src.Web.Controllers
         }
 
         [HttpGet("subscription"), Authorize]
-        [SwaggerOperation("Проверить наличие подписки")]
+        [SwaggerOperation("Проверить наличие подписки на пользователя")]
         [SwaggerResponse(200)]
         [SwaggerResponse(204)]
 
         public async Task<IActionResult> GetSubscription(
-            [FromQuery, Required] Guid subscriptionId,
+            [FromQuery, Required] Guid userId,
             [FromHeader(Name = nameof(HttpRequestHeaders.Authorization))] string token)
         {
             var tokenPayload = _jwtService.GetTokenPayload(token);
-            var userSubscription = await _subscriptionRepository.GetUserSubscriptionAsync(subscriptionId, tokenPayload.UserId);
-            return userSubscription == null ? NoContent() : Ok();
+            var userSubscription = await _subscriptionRepository.HasAnySubscriptionToCreator(userId, tokenPayload.UserId);
+            return userSubscription ? Ok() : NoContent();
         }
 
         [HttpGet("subscriptions-created"), Authorize]

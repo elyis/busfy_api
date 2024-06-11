@@ -15,5 +15,6 @@ namespace busfy_api.src.Domain.IRepository
         Task<UserSubscription?> CreateUserSubscription(Guid id, UserModel user);
         Task<UserSubscription?> GetUserSubscriptionAsync(Guid subscriptionId, Guid userId);
         Task<bool> DeleteAsync(Guid id, Guid userId);
+        Task<bool> HasAnySubscriptionToCreator(Guid creatorId, Guid subId);
     }
 }
