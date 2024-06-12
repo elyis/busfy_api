@@ -18,6 +18,7 @@ namespace busfy_api.src.Domain.Models
         {
             return new UserSubscriptionBody
             {
+                SubscriptionId = SubscriptionId,
                 Type = Enum.Parse<ContentSubscriptionType>(Subscription.Type),
                 EndDate = EndDate
             };

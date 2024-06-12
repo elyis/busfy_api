@@ -54,10 +54,10 @@ namespace busfy_api.src.Infrastructure.Repository
             return subscription;
         }
 
-        public async Task<bool> HasAnySubscriptionToCreator(Guid creatorId, Guid subId)
+        public async Task<IEnumerable<UserSubscription>> GetSubscriptionsToCreator(Guid creatorId, Guid subId)
         {
             var subscriptions = await GetSubscriptionsByUserAndSubscription(subId, int.MaxValue, 0);
-            return subscriptions.Any(e => e.Subscription.CreatorId == creatorId);
+            return subscriptions.Where(e => e.Subscription.CreatorId == creatorId);
         }
 
         public async Task<UserSubscription?> CreateUserSubscription(Guid id, UserModel user)
